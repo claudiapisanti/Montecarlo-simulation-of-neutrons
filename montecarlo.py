@@ -1,33 +1,36 @@
-#%%
 """
-rettangolo omogeneo con x,y,z o ingresso a utente
-sorgente in 000 o ingresso a utente
-sorgente monoenergetica
+AGGIUNGI: 
+sorgente sferica isotropa
+muoni cosmici a 0slm
+lettura da file
+"""
 
-1)estraggo modulo(lo so già) direzione e verso
-    alla fine sta in un altra terna
-    
-2)
-"""
-#%% IMPORTO LE LIBRERIE
+# IMPORT LIBRARIES
 from random import random, seed
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import functions as f
+import functions as func
 seed(1)
 
 
 
+# CONSTANTS -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# read info from file
+f = open("physical_characteristics.txt", "r")
+print(f.readline(1))
+print(f.readline())
 
 Na = 6.0221409e23 # Avogadro's number
 
 N = int(input('insert number of particles:'))
-#%% CROSS SECTIONS, densità di molecole, etc
 # provo un materiale di acqua
 E = 100 # eV energia (è monoenergetico)
 rho = 1 #g/cm^3 densità
 Mmol = 18.01528 # g/mol massa molare
+
+
+# CROSS SECTIONS, densità di molecole, etc -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 
 # costruisco la mia tabella della cs e mi calcolo 
 cs = {'hydrogen': [20.4252, 20.4305, 0.0053], 
@@ -49,62 +52,54 @@ l = cs_df * n
 p_elastic = cs_df[0,2] / cs_df[1,2]
 p_inelastic = (cs_df[1,2] - cs_df[0,2]) / cs_df[1,2]
 
-#%% GENERO UN RETTANGOLO (lo scintillatore) E UN SUBRETTANGOLO (detectabile)
+# GENERO UN RETTANGOLO (lo scintillatore) E UN SUBRETTANGOLO (detectabile) -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 print("""
       MONTECARLO METHOD.
       Inserisci coordinate x,y,z in centimetri del volume da considerare: \n
        """)
-x_rect = float(input("x: "))
-y_rect = float(input("y: "))
-z_rect = float(input("z: "))
 
-print("\nIl rettangolo ha dimensioni ", x_rect, 'x', y_rect,'x', z_rect, 'cm')
-
+pos_max = func.get_pos()
 pos_min = np.array([0,0,0])
-pos_max = np.array([x_rect, y_rect, z_rect])
+
+print("\nIl rettangolo ha dimensioni ", pos_max[0], 'x', pos_max[1],'x', pos_max[2], 'cm')
+
 
 print("""
       Ora inserisci le dimensioni della sottoregione dove misurare quante
       interazioni accadono.: \n
       """)
   
-x_subrect = float(input("x: "))
-y_subrect = float(input("y: "))
-z_subrect = float(input("z: "))
 
-sub_rect = np.array([x_subrect, y_subrect, z_subrect])
+sub_rect = func.get_pos()
   
 
 while( (sub_rect >= pos_max ).any()):
         print ('errore: il la sottoregione eccede la regione. Immetti nuovi valori:')
-        
-        x_subrect = float(input("x: "))
-        y_subrect= float(input("y: "))
-        z_subrect = float(input("z: "))
-        
-        sub_rect = np.array([x_subrect, y_subrect, z_subrect])
-
+        sub_rect = func.get_pos()
     
        
-print("\nIl la sottoregione ha coordinate (0.0,", x_subrect, '; 0.0,', y_subrect,';0.0,', z_subrect, ')')
+print("\nIl la sottoregione ha coordinate (0.0,", sub_rect[0], '; 0.0,', sub_rect[1],';0.0,', sub_rect[2], ')')
 
 
 # METTI UN WHILE PER VEDERE CONTINUARE A CHIEDERE INPUT SE IL PROGRAMMA FINO A CHE NON VANNO BENE LE CONDIZIONI SE IL PROGRAMMA 
 # SIA PER SUBRECT SIA PER LA SORGENTE
 
-#%% DEFINISCO IL TIPO DI SORGENTE (puntiforme/estesa)
+###########################################################
+###########################################################
+# DEFINISCO IL TIPO DI SORGENTE (puntiforme/estesa/sferica)
 type_source = '0'
-while(type_source != 'EST' and type_source != 'PUNT'):
+while(type_source != 'EST' and type_source != 'PUNT' and type_source != 'SPH'):
     type_source = input("""
         Type EST if the source is estesa;
         Type PUNT if the source is puntiforme
+        Type SPH if the source is spherical
         """)
     if (type_source != '0'): print('errore')
 
 
 
 
-#%% POSIZIONE SORGENTE
+# POSIZIONE SORGENTE
 
 
 if (type_source == 'PUNT'):
@@ -113,25 +108,16 @@ if (type_source == 'PUNT'):
          Inserisci la posizione della sorgente: 
             """)
 
-    x_source = float(input("x: "))
-    y_source = float(input("y: "))
-    z_source = float(input("z: "))
-
-
-    pos_source = np.array([x_source, y_source, z_source])
+    pos_source = func.get_pos()
     face = 0
 
     while((pos_source >= pos_max ).any()):
-            print ('errore: il la sorgente è fuori dallo scintillatore. Immetti nuovi valori:')
+        print ('errore: il la sorgente è fuori dallo scintillatore. Immetti nuovi valori:')
             
-            x_source = float(input("x: "))
-            y_source = float(input("y: "))
-            z_source = float(input("z: "))
-            
-            pos_source = np.array([x_source, y_source, z_source])
+        pos_source = func.get_pos()
 
 
-    print("La sorgente è situata in (", x_source,',', y_source, ',', z_source, ')')
+    print("La sorgente è situata in (", pos_source[0],',', pos_source[1], ',', pos_source[2], ')')
 elif(type_source == 'EST'):
     print('esteso')
     # SCELTA DELLA FACCIA
@@ -153,9 +139,17 @@ elif(type_source == 'EST'):
         face_prob_cum[i] = sum(face_prob[:(i+1)]) / sum(face_prob) # cumulativa
 
     print("------------> ", face_prob, sum(face_prob), face_prob_cum)
+elif(type_source == 'SPH'):
+    print('spherical')
+    sph_radius = max(pos_max[0], pos_max[1], pos_max[2]) + 5 # (cm) # non mi metto esattamente sul bordo perché potrei avere problemi al bordo
+    print('-------------------> '+ str(sph_radius))
+    face = 0 # otw mi da errore
 
 
-#%% MONTECARLO
+##############################################################
+##############################################################
+##############################################################
+# MONTECARLO
 
 xs = []
 ys = []
@@ -169,22 +163,18 @@ event.write('evento\tx\ty\tz\tface\n')
 k = 0
 p_type = 0
 
-def find_nearest(array,value):
-    idx = np.searchsorted(array, value, side="right")
-    return idx
-   
 
-def face_func(face_prob_cum):
-    r = random()
-    index = find_nearest(face_prob_cum, r)
-    return int(index +1)
 
 for i in range (0,N): # eventi
     print('evento = ', i)
     if(type_source == 'EST'): 
-        face = face_func(face_prob_cum)
-        pos_source = f.source(face,x_rect,y_rect,z_rect)
-    
+        face = func.face_func(face_prob_cum)
+        pos_source = func.source(face,pos_max[0],pos_max[1],pos_max[2])
+    elif(type_source == 'SPH'):
+        phi_source = func.random_rescale(np.pi)
+        theta_source = func.random_rescale(2*np.pi)
+        pos_source = func.from_sph_coord_to_xyz(sph_radius,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # centrato al centro del sistema
+        
         
     
     j = 0
@@ -206,11 +196,7 @@ for i in range (0,N): # eventi
         r = - l[1,2] * np.log(1-p_interaction)# sto usando la BEER LAMBERT LAW ma non so se posso usarla per i fotoni
         
         # traduco le coordinate sferuche in coordinate cartesiane (x,y,z)
-        x1 = x0 + r * np.sin(phi) * np.cos(theta)
-        y1 = y0 + r * np.sin(phi) * np.sin(theta)
-        z1 = z0 + r * np.cos(phi)
-        pos = np.array([x1,y1,z1])
-        
+        pos = func.from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0)
         
         # controllo di stare dentro il rettangolo
         if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
@@ -227,20 +213,20 @@ for i in range (0,N): # eventi
                 # print('evento=',i,'step=', j)
                 # print(pos)
                 
-                step.write(f'{i}\t{j}\t{x1}\t{y1}\t{z1}\t{face}\telastic\n')
+                step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
                 
                 j = j+1 # step successivo
                 
             else:
                 # print('particle got absorbed') 
-                step.write(f'{i}\t{j}\t{x1}\t{y1}\t{z1}\t{face}\tinelastic\n')
-                event.write(f'{i}\t{j}\t{x1}\t{y1}\t{z1}\t{face}\n')
+                step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
                 
         elif((pos!=pos_source).all()):
             # print('particle out of detector')
             event.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
      
-        x0,y0,z0 = x1,y1,z1
+        x0,y0,z0 = pos
 
         
     
@@ -249,14 +235,17 @@ for i in range (0,N): # eventi
 step.close()  
 event.close()  
 
-print("nel rettangolo(0.0,", x_subrect, '; 0.0,', y_subrect,';0.0,', z_subrect, '), sono avvenute k = ', k, 'interazioni' )
+print("nel rettangolo(0.0,", sub_rect[0], '; 0.0,', sub_rect[1],';0.0,', sub_rect[2], '), sono avvenute k = ', k, 'interazioni' )
 
-#%% IMPORTO LE TABELLE
+##########################################
+##########################################
+##########################################
+# IMPORTO LE TABELLE
 
 step = pd.read_csv('step.txt', sep = '\t', index_col = False)
 event =  pd.read_csv('step.txt', sep = '\t', index_col = False)
 
-#%% 
+# 
 
 # from mpl_toolkits import mplot3d
 
