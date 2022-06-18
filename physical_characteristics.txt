@@ -1,0 +1,22 @@
+100 200 300 # dimensioni rettangolo
+10 20 30 # dimensioni del sotto-rettangolo
+SPH # tipo di sorgente
+150.1 # raggio della sorgente sferica: la sorgente è posizionata nel centro dello scintillatore
+###############################à
+
+
+
+
+
+
+EST # tipo di sorgente
+100 2 3 4 5 6 # probabilità per ogni sorgente
+
+
+
+
+
+
+
+PUNT # tipo di sorgente
+40 40 40 # posizione sorgente puntiforme

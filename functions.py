@@ -24,11 +24,13 @@ def source(face, x_rect,y_rect,z_rect):
     return pos
 
 
-def get_pos():
-    "get x,y,z coords da tastiera"
-    x = float(input("x: "))
-    y = float(input("y: "))
-    z = float(input("z: "))
+def get_pos(f):
+    "get x,y,z coords from file"
+    string = f.readline()
+    print(string)
+    x = float(string.split(' ')[0])
+    y = float(string.split(' ')[1])
+    z = float(string.split(' ')[2])
     pos = np.array([x, y, z])
 
     return pos

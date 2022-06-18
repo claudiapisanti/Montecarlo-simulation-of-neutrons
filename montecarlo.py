@@ -18,8 +18,7 @@ seed(1)
 # CONSTANTS -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # read info from file
 f = open("physical_characteristics.txt", "r")
-print(f.readline(1))
-print(f.readline())
+
 
 Na = 6.0221409e23 # Avogadro's number
 
@@ -58,10 +57,12 @@ print("""
       Inserisci coordinate x,y,z in centimetri del volume da considerare: \n
        """)
 
-pos_max = func.get_pos()
+pos_max = func.get_pos(f) # this is the first line of the code
 pos_min = np.array([0,0,0])
 
-print("\nIl rettangolo ha dimensioni ", pos_max[0], 'x', pos_max[1],'x', pos_max[2], 'cm')
+
+print("\nIl rettangolo ha dimensioni ", 
+    pos_max[0], 'x', pos_max[1],'x', pos_max[2], 'cm')
 
 
 print("""
@@ -70,12 +71,12 @@ print("""
       """)
   
 
-sub_rect = func.get_pos()
+sub_rect = func.get_pos(f) # questa è la seconda riga di codice
   
 
-while( (sub_rect >= pos_max ).any()):
-        print ('errore: il la sottoregione eccede la regione. Immetti nuovi valori:')
-        sub_rect = func.get_pos()
+if( (sub_rect >= pos_max ).any()):
+        print ('errore: il la sottoregione eccede la regione. Aggiusta il tuo file')
+        quit() # chiudi il programma se i dati di input sono sbagliati
     
        
 print("\nIl la sottoregione ha coordinate (0.0,", sub_rect[0], '; 0.0,', sub_rect[1],';0.0,', sub_rect[2], ')')
@@ -87,14 +88,9 @@ print("\nIl la sottoregione ha coordinate (0.0,", sub_rect[0], '; 0.0,', sub_rec
 ###########################################################
 ###########################################################
 # DEFINISCO IL TIPO DI SORGENTE (puntiforme/estesa/sferica)
-type_source = '0'
-while(type_source != 'EST' and type_source != 'PUNT' and type_source != 'SPH'):
-    type_source = input("""
-        Type EST if the source is estesa;
-        Type PUNT if the source is puntiforme
-        Type SPH if the source is spherical
-        """)
-    if (type_source != '0'): print('errore')
+type_source = f.readline().split(' ')[0]
+print(type_source)
+
 
 
 
@@ -108,32 +104,27 @@ if (type_source == 'PUNT'):
          Inserisci la posizione della sorgente: 
             """)
 
-    pos_source = func.get_pos()
+    pos_source = func.get_pos(f) # questa è la terza riga di codice
+    print(pos_source)
     face = 0
 
     while((pos_source >= pos_max ).any()):
-        print ('errore: il la sorgente è fuori dallo scintillatore. Immetti nuovi valori:')
-            
-        pos_source = func.get_pos()
+        print ('errore: il la sorgente è fuori dallo scintillatore. Correggi il file.txt')
+        quit()
 
 
     print("La sorgente è situata in (", pos_source[0],',', pos_source[1], ',', pos_source[2], ')')
 elif(type_source == 'EST'):
     print('esteso')
     # SCELTA DELLA FACCIA
-    print("""Immetti la probabilità per ogni faccia
-            1-sopra
-            2-destra
-            3-davanti
-            4-sinistra
-            5-dietro
-            6-sotto
-        """)
 
     face_prob = np.zeros(6)
     face_prob_cum = np.zeros(6)
+    face_prob_line = f.readline()
+
     for i in range(6):
-       face_prob[i] = float(input(f'faccia {i+1}:  '))
+       face_prob[i] = float(face_prob_line.split(' ')[i])
+
 
     for i in range(6):
         face_prob_cum[i] = sum(face_prob[:(i+1)]) / sum(face_prob) # cumulativa
@@ -141,9 +132,11 @@ elif(type_source == 'EST'):
     print("------------> ", face_prob, sum(face_prob), face_prob_cum)
 elif(type_source == 'SPH'):
     print('spherical')
-    sph_radius = max(pos_max[0], pos_max[1], pos_max[2]) + 5 # (cm) # non mi metto esattamente sul bordo perché potrei avere problemi al bordo
+    sph_radius = float(f.readline().split(' ')[0]) # (cm) # non mi metto esattamente sul bordo perché potrei avere problemi al bordo /2 perché metto il centro della sfera al centro dello scintillatore
     print('-------------------> '+ str(sph_radius))
     face = 0 # otw mi da errore
+
+
 
 
 ##############################################################
@@ -167,10 +160,10 @@ p_type = 0
 
 for i in range (0,N): # eventi
     print('evento = ', i)
-    if(type_source == 'EST'): 
+    if(type_source == 'EST'): # ottengo una posizione iniziale
         face = func.face_func(face_prob_cum)
         pos_source = func.source(face,pos_max[0],pos_max[1],pos_max[2])
-    elif(type_source == 'SPH'):
+    elif(type_source == 'SPH'): # ottengo una posizione finale
         phi_source = func.random_rescale(np.pi)
         theta_source = func.random_rescale(2*np.pi)
         pos_source = func.from_sph_coord_to_xyz(sph_radius,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # centrato al centro del sistema
