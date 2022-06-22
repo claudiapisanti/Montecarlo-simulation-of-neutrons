@@ -18,67 +18,74 @@ seed(1)
 # CONSTANTS -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # read info from file
 f = open("physical_characteristics.txt", "r")
+cs_table = pd.read_csv('./cross_sections/cs.txt', sep = '\t')
+
 
 
 Na = 6.0221409e23 # Avogadro's number
 
 N = int(input('insert number of particles:'))
 # provo un materiale di acqua
-E = 100 # eV energia (è monoenergetico)
-rho = 1 #g/cm^3 densità
-Mmol = 18.01528 # g/mol massa molare
+# E = 100 # eV energia (è monoenergetico) # !!!!!!!!!!!!
+rho = 1.023 #g/cm^3 densità                 
+Mmol = 118. # g/mol massa molare 
+n = Na*rho/Mmol # densità di particelle target 
 
 
+# vedo che energia prendere
+line  = f.readline()
+En_type = line.split(' ')[0]
+if(En_type == 'MONO'): # per una sorgente monoenergetica mi ottengo le cross section dal file.txt
+    line = f.readline() # in eV 
+    E = float(line.split(' ')[0])
+    cs, l, p_elastic, p_inelastic = func.get_cs(E,n,cs_table)
+
+elif(En_type == 'UNIF'):
+    line = f.readline() # in eV 
+    E_min = float(line.split(' ')[0])
+    E_max = float(line.split(' ')[1])
+
+else:
+    print('errore: enrgy type not valid. Correggi il file di input')
+    quit()
+
+# --------------------------------------------------------------------da eliminare
 # CROSS SECTIONS, densità di molecole, etc -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 
-# costruisco la mia tabella della cs e mi calcolo 
-cs = {'hydrogen': [20.4252, 20.4305, 0.0053], 
-      'oxygen':[3.79371, 3.793714, 0.0 ],
-      }
-cs['water'] = [2*cs['hydrogen'][0] + cs['oxygen'][0],
-               2*cs['hydrogen'][1] + cs['oxygen'][1],
-               2*cs['hydrogen'][2] + cs['oxygen'][2] ]
+# # costruisco la mia tabella della cs e mi calcolo 
+# cs = {'hydrogen': [20.4252, 20.4305, 0.0053], 
+#       'oxygen':[3.79371, 3.793714, 0.0 ],
+#       }
+# cs['water'] = [2*cs['hydrogen'][0] + cs['oxygen'][0],
+#                2*cs['hydrogen'][1] + cs['oxygen'][1],
+#                2*cs['hydrogen'][2] + cs['oxygen'][2] ]
 
-cs_df = pd.DataFrame(cs, index = ['elastic', 'total', 'inelastic'])
+# cs_df = pd.DataFrame(cs, index = ['elastic', 'total', 'inelastic'])
+# print(cs_df)
 
-cs_df = np.dot(cs_df, 10e-24) # converto la cs da barn a cm^2
+# cs_df = np.dot(cs_df, 10e-24) # converto la cs da barn a cm^2
+# print(cs_df)
+# print(cs_df[0,2])
 
 # cs_wat = 2*c
+# --------------------------------------------------------------------
 
-n = Na*rho/Mmol # densità di particelle target
-l = cs_df * n
-
-p_elastic = cs_df[0,2] / cs_df[1,2]
-p_inelastic = (cs_df[1,2] - cs_df[0,2]) / cs_df[1,2]
 
 # GENERO UN RETTANGOLO (lo scintillatore) E UN SUBRETTANGOLO (detectabile) -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
-print("""
-      MONTECARLO METHOD.
-      Inserisci coordinate x,y,z in centimetri del volume da considerare: \n
-       """)
-
 pos_max = func.get_pos(f) # this is the first line of the code
 pos_min = np.array([0,0,0])
 
-
-print("\nIl rettangolo ha dimensioni ", 
+print("\nLo scintillatore ha dimensioni ", 
     pos_max[0], 'x', pos_max[1],'x', pos_max[2], 'cm')
 
-
-print("""
-      Ora inserisci le dimensioni della sottoregione dove misurare quante
-      interazioni accadono.: \n
-      """)
-  
-
+# seleziono una zona di interesse dove contare il numero di eventi
 sub_rect = func.get_pos(f) # questa è la seconda riga di codice
   
 
 if( (sub_rect >= pos_max ).any()):
         print ('errore: il la sottoregione eccede la regione. Aggiusta il tuo file')
         quit() # chiudi il programma se i dati di input sono sbagliati
-    
-       
+      
 print("\nIl la sottoregione ha coordinate (0.0,", sub_rect[0], '; 0.0,', sub_rect[1],';0.0,', sub_rect[2], ')')
 
 
@@ -92,18 +99,11 @@ type_source = f.readline().split(' ')[0]
 print(type_source)
 
 
-
-
-
 # POSIZIONE SORGENTE
-
 
 if (type_source == 'PUNT'):
     print('puntiforme')
-    print("""
-         Inserisci la posizione della sorgente: 
-            """)
-
+    # posizione della sorgente
     pos_source = func.get_pos(f) # questa è la terza riga di codice
     print(pos_source)
     face = 0
@@ -116,8 +116,8 @@ if (type_source == 'PUNT'):
     print("La sorgente è situata in (", pos_source[0],',', pos_source[1], ',', pos_source[2], ')')
 elif(type_source == 'EST'):
     print('esteso')
-    # SCELTA DELLA FACCIA
 
+    # SCELTA DELLA FACCIA
     face_prob = np.zeros(6)
     face_prob_cum = np.zeros(6)
     face_prob_line = f.readline()
@@ -135,7 +135,6 @@ elif(type_source == 'SPH'):
     sph_radius = float(f.readline().split(' ')[0]) # (cm) # non mi metto esattamente sul bordo perché potrei avere problemi al bordo /2 perché metto il centro della sfera al centro dello scintillatore
     print('-------------------> '+ str(sph_radius))
     face = 0 # otw mi da errore
-
 
 
 
@@ -167,7 +166,11 @@ for i in range (0,N): # eventi
         phi_source = func.random_rescale(np.pi)
         theta_source = func.random_rescale(2*np.pi)
         pos_source = func.from_sph_coord_to_xyz(sph_radius,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # centrato al centro del sistema
-        
+    if(En_type == 'UNIF') :
+        E = func.random_rescale(E_max, E_min)
+        cs, l, p_elastic, p_inelastic = func.get_cs(E,n,cs_table)
+
+
         
     
     j = 0
@@ -186,7 +189,7 @@ for i in range (0,N): # eventi
         theta = random() * 2 * np.pi   # thetha è compreso tra 0 e 2pi
         
         p_interaction = random() # probabilità di interazione con cui calcolare lo spazio
-        r = - l[1,2] * np.log(1-p_interaction)# sto usando la BEER LAMBERT LAW ma non so se posso usarla per i fotoni
+        r = - l[0] * np.log(1-p_interaction)# sto usando la BEER LAMBERT LAW ma non so se posso usarla per i fotoni # uso lambda della cross section totale
         
         # traduco le coordinate sferuche in coordinate cartesiane (x,y,z)
         pos = func.from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0)
@@ -221,7 +224,7 @@ for i in range (0,N): # eventi
      
         x0,y0,z0 = pos
 
-        
+    
     
     
     

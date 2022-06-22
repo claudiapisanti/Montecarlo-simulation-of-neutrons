@@ -1,9 +1,15 @@
+MONO # tipo energia sorgente tipo scegli tra MONO, UNIF
+10000000 # energia sorgente
 100 200 300 # dimensioni rettangolo
 10 20 30 # dimensioni del sotto-rettangolo
 SPH # tipo di sorgente
 150.1 # raggio della sorgente sferica: la sorgente è posizionata nel centro dello scintillatore
 ###############################à
 
+
+
+UNIF # tipo energia sorgente tipo scegli tra MONO, UNIF, GAUSS
+1000000 2000000 # Energia minima e massima
 
 
 

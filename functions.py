@@ -4,8 +4,9 @@ from random import random
 
 #%% FUNZIONI da mettere in un altro file
 
-def random_rescale(rescale):
-    val = random() * rescale
+def random_rescale(val_max, val_min = 0):
+    'riscalo il mio valore in un determinato range'
+    val = random() * (val_max - val_min) + val_min
     return val
 
 def source(face, x_rect,y_rect,z_rect):
@@ -27,13 +28,31 @@ def source(face, x_rect,y_rect,z_rect):
 def get_pos(f):
     "get x,y,z coords from file"
     string = f.readline()
-    print(string)
+    #print(string)
     x = float(string.split(' ')[0])
     y = float(string.split(' ')[1])
     z = float(string.split(' ')[2])
     pos = np.array([x, y, z])
 
     return pos
+
+def get_cs(E, n, cs_table):   
+    """get csv info given Energy"""
+
+    index = find_nearest(cs_table['energia'], E)
+
+    cs_tot = cs_table['cs_tot'][index]
+    cs_el = cs_table['cs_el'][index]
+    cs_inel = cs_table['cs_inel'][index]
+    cs = [cs_tot, cs_el, cs_inel] # cs[0] = totale, cs[1] = elastico, cs[2] = inelastico
+    cs = np.dot(cs, 10e-24) # converto la cs da barn a cm^2
+    l = np.dot(cs, n) # calcolo lambda
+
+    p_elastic = cs[1] / cs[0] # probabilità di avere scattering elastico
+    p_inelastic = cs[2] / cs[0] # probabilità di avere scattering inelastico rispetto alla probabilità di avere scattering
+
+    return cs, l, p_elastic, p_inelastic
+
 
 
 
