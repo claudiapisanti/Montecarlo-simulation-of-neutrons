@@ -1,9 +1,9 @@
 MONO # tipo energia sorgente tipo scegli tra MONO, UNIF
-10000000 # energia sorgente
-100 200 300 # dimensioni rettangolo
-10 20 30 # dimensioni del sotto-rettangolo
-SPH # tipo di sorgente
-150.1 # raggio della sorgente sferica: la sorgente è posizionata nel centro dello scintillatore
+20000000 # energia sorgente
+6 6 6 # dimensioni rettangolo
+5 5 5 # dimensioni del sotto-rettangolo
+PUNT # tipo di sorgente
+3 0 3 # posizione sorgente puntiforme
 ###############################à
 
 
@@ -26,3 +26,6 @@ EST # tipo di sorgente
 
 PUNT # tipo di sorgente
 40 40 40 # posizione sorgente puntiforme
+
+SPH # tipo di sorgente
+150.1 # raggio della sorgente sferica: la sorgente è posizionata nel centro dello scintillatore

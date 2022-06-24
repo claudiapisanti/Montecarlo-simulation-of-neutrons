@@ -23,6 +23,7 @@ cs_table = pd.read_csv('./cross_sections/cs.txt', sep = '\t')
 
 
 Na = 6.0221409e23 # Avogadro's number
+MeV1 = 1000000
 
 N = int(input('insert number of particles:'))
 # provo un materiale di acqua
@@ -37,8 +38,7 @@ line  = f.readline()
 En_type = line.split(' ')[0]
 if(En_type == 'MONO'): # per una sorgente monoenergetica mi ottengo le cross section dal file.txt
     line = f.readline() # in eV 
-    E = float(line.split(' ')[0])
-    cs, l, p_elastic, p_inelastic = func.get_cs(E,n,cs_table)
+    E_mono = float(line.split(' ')[0])
 
 elif(En_type == 'UNIF'):
     line = f.readline() # in eV 
@@ -150,7 +150,7 @@ zs = []
 step = open("step.txt", "w")
 event = open("event.txt", "w")
 step.write('evento\tstep\tx\ty\tz\tface\tinteraction\n')
-event.write('evento\tx\ty\tz\tface\n')
+event.write('evento\tlast_step\tx\ty\tz\tface\n')
 
 k = 0
 p_type = 0
@@ -166,9 +166,15 @@ for i in range (0,N): # eventi
         phi_source = func.random_rescale(np.pi)
         theta_source = func.random_rescale(2*np.pi)
         pos_source = func.from_sph_coord_to_xyz(sph_radius,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # centrato al centro del sistema
+    
     if(En_type == 'UNIF') :
         E = func.random_rescale(E_max, E_min)
-        cs, l, p_elastic, p_inelastic = func.get_cs(E,n,cs_table)
+        cs, l, p = func.get_cs(E,n,cs_table)
+    elif(En_type == 'MONO'):
+        E = E_mono
+        cs, l, p = func.get_cs(E_mono,n,cs_table)
+
+
 
 
         
@@ -178,45 +184,85 @@ for i in range (0,N): # eventi
     x0 = pos_source[0]
     y0 = pos_source[1]
     z0 = pos_source[2]
-    pos = [0.,0.,0.] # ??
+    pos = [0.,0.,0.] # ?? inizializzo
     
     step.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\n') # sorgente
 
+    DeltaE = 0
+    theta_scat = 0
     while( (pos >= pos_min ).all()  & (pos <= pos_max).all()):
        
         # mi conviene lavorare in coordinate polari
-        phi = random() * np.pi # phi è compreso tra 0 e pi 
-        theta = random() * 2 * np.pi   # thetha è compreso tra 0 e 2pi
-        
+
+        # direzione iniziale
+        if j == 0:
+            phi = func.random_rescale(2*np.pi) # phi è compreso tra 0 e 2*pi 
+            theta = func.random_rescale(np.pi)   # thetha è compreso tra 0 e pi
+        else: 
+            r = random()
+            phi = phi + theta_scat* np.cos(r)  
+            theta = theta + theta_scat * np.sin(r) 
+        # percorso fatto dal neutrone
         p_interaction = random() # probabilità di interazione con cui calcolare lo spazio
         r = - l[0] * np.log(1-p_interaction)# sto usando la BEER LAMBERT LAW ma non so se posso usarla per i fotoni # uso lambda della cross section totale
         
         # traduco le coordinate sferuche in coordinate cartesiane (x,y,z)
-        pos = func.from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0)
+        pos = func.from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # posizione dell'interazione
         
         # controllo di stare dentro il rettangolo
         if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
-            
-            # print( (pos >= pos_min ).all()  & (pos <= pos_max).all())
-            
-            
+ 
             # segno quante interazioni accadono in un subrettangolo
             if( (pos >= pos_min ).all() & (pos <= sub_rect).all() ): k = k+1
                 
-            p_type = random() # tipo di interazione
+            # vedo se il protone interagisce con un carbonio o con un protone
+            p_atom = random()
+            if (p_atom <= p[0]): # allora interagisce con il carbonio
+                # vedo se fa urto elastico o inelastico
+                p_type = random() 
             
-            if(p_type <= p_elastic ): 
-                # print('evento=',i,'step=', j)
-                # print(pos)
+                if(p_type <= p[4] ): # ovvero se sono all'interno di uno scattering ELASTICO con il carbonio
+                    A = 12
+                    step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
+                    
+                    # calcolo la perdita di energia e di conseguenza il theta_sc (da capire)
+
+                    theta_scat, E = func.scattering_angle(E, A)
+                    if E < MeV1: break # QUESTA SOGLIA VA ABBASSATA (?)
+                    j = j+1 # step successivo
+
                 
-                step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
+                else: # ovvero se il neutrone fa scattering inelastico
+                    step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                    event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
+                    j = j+1 # step successivo
+
+                    break
+
+            else: # allora interagisce con il protone
+                # vedo se fa urto elastico o inelastico
+                p_type = random() 
+            
+                if(p_type <= p[2] ): # ovvero se sono all'interno di uno scattering elastico con il protone
+                    A = 1
+                    step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
+                    
+                    
+                    # calcolo la perdita di eienrgia e di conseguenza il theta_sc (da capire)
+                    theta_scat, E = func.scattering_angle(E, A)
+                    if E < MeV1: break # QUESTA SOGLIA VA ABBASSATA (?)
+
+                    j = j+1 # step successivo
+
                 
-                j = j+1 # step successivo
+                else: # ovvero se il neutrone fa scattering inelastico
+                    step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                    event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
+                     
+                    j = j+1 # step successivo
+
+                    break
                 
-            else:
-                # print('particle got absorbed') 
-                step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
-                event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
                 
         elif((pos!=pos_source).all()):
             # print('particle out of detector')
@@ -224,18 +270,19 @@ for i in range (0,N): # eventi
      
         x0,y0,z0 = pos
 
-    
-    
-    
-    
+
+
+
+
+
 step.close()  
 event.close()  
 
 print("nel rettangolo(0.0,", sub_rect[0], '; 0.0,', sub_rect[1],';0.0,', sub_rect[2], '), sono avvenute k = ', k, 'interazioni' )
 
-##########################################
-##########################################
-##########################################
+##############################################################################################################################
+##############################################################################################################################
+##############################################################################################################################
 # IMPORTO LE TABELLE
 
 step = pd.read_csv('step.txt', sep = '\t', index_col = False)
@@ -259,26 +306,38 @@ for i in range(6):
 plt.title('Distribuzione eventi')
 ax.view_init(25, 45)
 
-plt.xlabel('x')
-plt.ylabel('y')
+ax.axes.set_xlim3d(left=-30.0, right=30.0) 
+ax.axes.set_ylim3d(bottom=-30.0, top=30.0) 
+ax.axes.set_zlim3d(bottom=-30.0, top=30.0)
+ax.set_xlabel('x', fontsize = 12)
+ax.set_ylabel('y', fontsize = 12)
+ax.set_zlabel('z', fontsize = 12)
 plt.savefig('tot_eventi.png')
 plt.close()
     
 #%%
-
+fig = plt.figure(figsize = (10,10))
+ax = plt.axes(projection='3d')
 plt.title("Primi 30 eventi ")
+ax.view_init(25, 45)
+
 for i in range (0,30):
     
     x = step['x'][step['evento'] == i]
     y = step['y'][step['evento'] == i]
-    plt.plot(x,y, alpha = 0.7)
+    z = step['z'][step['evento'] == i]
+    plt.plot(x,y,z, alpha = 0.7)
     
-plt.savefig('20_eventi.png')
-plt.xlabel('x')
-plt.ylabel('y')
-plt.close()
+ax.axes.set_xlim3d(left=0.0, right=6.0) 
+ax.axes.set_ylim3d(bottom=0.0, top=6.0) 
+ax.axes.set_zlim3d(bottom=0.0, top=6.0)
+ax.set_xlabel('x', fontsize = 12)
+ax.set_ylabel('y', fontsize = 12)
+ax.set_zlabel('z', fontsize = 12)
+plt.savefig('30_eventi.png')
+plt.show()
+#plt.close()
 
 
-# +380633659226 Anna Grizan a.grizan@kodland.team 
           
           
