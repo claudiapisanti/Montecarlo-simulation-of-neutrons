@@ -142,9 +142,9 @@ ys = []
 zs = []
 
 
-# step = open("step.txt", "w")
-# event = open("event.txt", "w")
-step, event = func.file_init()
+step = open("step.txt", "w")
+event = open("event.txt", "w")
+# step, event = func.file_init()
 step.write('evento\tstep\tx\ty\tz\tface\tinteraction\n')
 event.write('evento\tlast_step\tx\ty\tz\tface\n')
 # step.close()

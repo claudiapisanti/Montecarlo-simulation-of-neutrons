@@ -7,41 +7,144 @@ import constants as c
 #%% FUNZIONI da mettere in un altro file
 
 def random_rescale(val_max, val_min = 0):
-    'riscalo il mio valore in un determinato range'
+    """
+    random_rescale(val_max, val_min = 0)
+    
+    Return a random number between the interval of interest (val_min, val_max).
+
+    Parameters:
+    -----------
+    val_max : float or int
+        Upper boundary of the interval
+
+    val_min: float or int, optional
+        Lower boundary of the interval. Default is 0.
+
+    Returns:
+    -------
+    val : float
+        Random number between interval boundaries
+
+    """
     val = random() * (val_max - val_min) + val_min
     return val
 
-def source(face, x_rect,y_rect,z_rect):
-    x_source = random() * x_rect
-    y_source = random() * y_rect
-    z_source = random() * z_rect
+def source_position_est(face):
+    """
+    Define the position of the source in a rectangular surface. 
+    
+    Parameters:
+    ----------
+    face: int
+        The face of the rectangle where the source must be placed
+
+    Returns:
+    -------
+    pos: array
+        Position of the source (array [x,y,z] ). 
+        Two elements of the array are random between the position of the array, 
+        while the third is selected in order to place the source on one of the face of the rectangle of interest.
+
+
+    ---------
+    The faces of the rectangle are numbered in the following way:
+
+    In the reference system x,y,z as in the graph,
+        1 --> Top
+        2 --> Right
+        3 --> Front
+        4 --> Left
+        5 --> Right
+        6 --> Botton
+
+    See figure for more clarification.
+
+    
+    In the reference:
+        
+
+               ________
+              /       /|
+             /   1   / | <-- 5 (backside)
+          z /_______/  |                        
+            |       | 2| y 
+        4-> |   3   |  /
+            |       | /  <-- 6 (bottom)
+            |______ |/
+           O         x
+    """
+
+    x_source = random_rescale(c.pos_max[0])
+    y_source = random_rescale(c.pos_max[1])
+    z_source = random_rescale(c.pos_max[2])
+    
+    # initialize position
     pos = [0,0,0]
-
-    if (face == 1): pos = np.array([x_source, y_source, z_rect])
-    if (face == 2): pos = np.array([x_rect, y_source, z_source])
-    if (face == 3): pos = np.array([x_source, 0.0, z_source])
-    if (face == 4): pos = np.array([0.0, y_source, z_source])
-    if (face == 5): pos = np.array([x_source, y_rect, z_source])
-    if (face == 6): pos = np.array([x_source, y_source, 0.0])
-
-    return pos
-
-
-def get_pos(f):
-    "get x,y,z coords from file"
-    string = f.readline()
-    #print(string)
-    x = float(string.split(' ')[0])
-    y = float(string.split(' ')[1])
-    z = float(string.split(' ')[2])
-    pos = np.array([x, y, z])
+    
+    if (face == 1): pos = np.array([x_source, y_source, c.pos_max[2]])
+    if (face == 2): pos = np.array([c.pos_max[0], y_source, z_source])
+    if (face == 3): pos = np.array([x_source, c.pos_min[1], z_source])
+    if (face == 4): pos = np.array([c.pos_min[0], y_source, z_source])
+    if (face == 5): pos = np.array([x_source, c.pos_max[1], z_source])
+    if (face == 6): pos = np.array([x_source, y_source, c.pos_min[2]])
 
     return pos
 
-def get_cs(E, n, cs_table):   
-    """get csv info given Energy"""
 
-    index = find_nearest(cs_table['energia'], E)
+
+def get_cs(E, cs_table):   
+    """
+    Get cross section given Energy.
+
+
+    Parameters:
+    ----------
+    E: float or int
+
+    cs_table: DataFrame
+        7 columns DataFrame table with all the cross section:
+
+        E	total_cs	cs_el	cs_inel	cs_h_tot	cs_h_el	cs_h_inel	cs_c_tot	cs_c_el	cs_c_inel
+
+        The function is specific for hydrocarbons, or molecules only constituted of carbon(C) and hydrogen(H).   
+        
+        Energy must be  in eV
+        cross sections must be in barn (b)
+
+
+
+    Returns:
+    -------
+    cs: array
+        For the determined energy, cross section form cs_Table, converted in cm^2
+
+        [ total cross section, 
+        total elastic cross section, 
+        total inelastic cross section, 
+        total proton corss section, 
+        proton elastic cross section, 
+        proton inelastic cross section, 
+        carbon total corss section, 
+        carbon elastic cross section, 
+        carbon inelastic cross section ]
+
+    l: array
+        Mean free path. The order of the array is the same of cs. In cm^2.
+
+    p: array
+        Array probability of having proton vs carbon scattering, and, 
+        for the single element (proton and carbon), of having elastic vs inelastic scattering.
+
+        [ prob of having carbon scattering, 
+        prob of having proton scattering, 
+        probability of having hydrogen elastic scattering, 
+        probability of having hydrogen inelastic scattering,
+        probability of having carbon elastic scattering, 
+        probability of having carbon inelastic scattering ]
+
+    """
+
+    index = find_nearest(cs_table['E'], E)
 
     cs_tot = cs_table['cs_tot'][index]
     cs_el = cs_table['cs_el'][index]
@@ -60,7 +163,7 @@ def get_cs(E, n, cs_table):
           cs_h_tot, cs_h_el, cs_h_inel, 
           cs_c_tot, cs_c_el, cs_c_inel] # cs[0] = totale, cs[1] = elastico, cs[2] = inelastico
     cs = np.dot(cs, 10e-24) # converto la cs da barn a cm^2
-    l = np.dot(cs, n) # calcolo lambda
+    l = np.dot(cs, c.n) # calcolo lambda
 
     p_carbon = 9 * cs[6] / cs[0]
     p_proton = 10 * cs[3] / cs[0]
@@ -74,22 +177,80 @@ def get_cs(E, n, cs_table):
     p = [p_carbon, p_proton,
          p_h_elastic, p_h_inelastic,
          p_c_elastic, p_c_inelastic]
+
     return cs, l, p
 
 
 
 
 def find_nearest(array,value):
+    """
+    This function find theindex of nearest value of a given one in an array.
+    The function finds the upper value. 
+
+    Parameters:
+    ----------
+    array: array
+        list of values from which the nearest value of 'value' must be found
+
+    value: int or float
+        the value to be found
+
+    Returns:
+    -------
+    idx: int
+        the index of the value to be found.
+
+    """
     idx = np.searchsorted(array, value, side="right")
     return idx
    
 
-def face_func(face_prob_cum):
+def face_func():
+    """
+    Randomly select a face of the rectangular extended source
+
+    Returns:
+    -------
+    out: int
+        index of the face. See source_position_est() for face number legend.
+
+    """
+
     r = random()
     index = find_nearest(c.face_prob_cum, r)
     return int(index +1)
 
-def from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0): 
+
+
+def from_sph_coord_to_xyz(r,phi,theta,x0= 0.,y0=0.,z0=0.):
+    """
+    Conversion form spherical coordinates to cartesian coordinates
+
+    Parameters:
+    ----------
+        r: float or int
+            from 0 to infinity [0, inf ]
+        phi: float or int
+            in radiant, boundaries: [0, pi]
+
+        theta: float or int
+            in radiant, boundaries: [0, 2*pi]
+        x0: float o int
+            initial coordinates x. Deaflut = 0.
+        y0: float or int
+            initial coordinates y. Deaflut = 0.
+        z0: float or int
+            initial coordinates z. Deaflut = 0.
+
+    Returns:
+    -------
+    pos: array  
+        position in x,y,z coordinates
+
+
+    """
+
     # ANGOLO IN RADIANTI!!!!
     
     x1 = x0 + r * np.cos(phi) * np.sin(theta)
@@ -99,6 +260,8 @@ def from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0):
     return pos
 
 def scattering_angle(E, A):
+
+    
     """calcolo l'angolo di scattering del neutrone rispetto alla direzione di origine.
     Formule by LEO<3"""
 
@@ -231,14 +394,6 @@ def scattering_angle(E, A):
         
 #     return k
 
-def file_init():
-    global step
-    global event
-    step = open("step.txt", "w")
-    event = open("event.txt", "w")
-    return step, event
-    
-
 
 
 #### PROVO A VEDERE SE, LEGGENDO DI VOLTA IN VOLTA LE COSE DAL FILE.C MI ESCE MEGLIO IL FILE.
@@ -249,8 +404,8 @@ def evento_letto_da_const(i, args): # [step, event, cs_table, k]
     """run sul singolo evento"""
     print('evento = ', i)
     if(c.type_source == 'EST'): # ottengo una posizione iniziale
-        face = face_func(c.face_prob_cum)
-        pos_source = source(face,c.pos_max[0],c.pos_max[1],c.pos_max[2])
+        face = face_func()
+        pos_source = source_position_est(face)
     elif(c.type_source == 'SPH'): # ottengo una posizione finale
         face = 0
         phi_source = random_rescale(np.pi)
@@ -262,10 +417,10 @@ def evento_letto_da_const(i, args): # [step, event, cs_table, k]
     
     if(c.En_type == 'UNIF') :
         E = random_rescale(c.E_max, c.E_min)
-        cs, l, p = get_cs(E,c.n,args[2])
+        cs, l, p = get_cs(E,args[2])
     elif(c.En_type == 'MONO'):
         E = c.E_mono
-        cs, l, p = get_cs(c.E_mono, c.n, args[2])
+        cs, l, p = get_cs(c.E_mono, args[2])
 
 
     

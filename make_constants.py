@@ -5,7 +5,19 @@ import numpy as np
 #########################################################
 
 def get_pos(f):
-    "get x,y,z coords from file"
+    """
+    Parameters:
+    ----------
+    f: file
+        File must be already opened for reading (f = open('file.txt','r')) 
+    
+    Returns:
+    ------
+    pos: array 
+        Position array of data from input file (x,y,z coordinates)
+
+    """
+    
     string = f.readline()
     #print(string)
     x = float(string.split(' ')[0])
@@ -28,6 +40,7 @@ E_max = 0
 E_min = 0
 face_prob_cum = 0
 sph_radius = 0
+pos_source = [0.,0.,0.]
 
 
 
@@ -146,7 +159,7 @@ w.write(f'E_mono = {E_mono}\n')
 w.write(f'E_max = {E_max}\n')
 w.write(f'E_min = {E_min}\n')
 w.write(f'n = {n}\n')
-w.write(f'face_prob_cum = {face_prob_cum}\n')
+w.write(f'face_prob_cum = np.array([{face_prob_cum[0]},{face_prob_cum[1]},{face_prob_cum[2]}])\n')
 w.write(f'pos_max = np.array([{pos_max[0]},{pos_max[1]},{pos_max[2]}])\n')
 w.write(f'pos_min = np.array([{pos_min[0]},{pos_min[1]},{pos_min[2]}])\n')
 w.write(f'sph_radius = {sph_radius}\n')
