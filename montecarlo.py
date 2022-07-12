@@ -21,16 +21,12 @@ import glob
 seed(1)
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
-
-# CONSTANTS -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
-# read info from file
+# read info from file and get number of particles form bash
 cs_table = pd.read_csv('./cross_sections/cs.txt', sep = '\t')
 
 N = int(input('insert number of particles:'))
 
-##############################################################
-##############################################################
-##############################################################
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # MONTECARLO
 n_processes = mp.cpu_count()
 print('Using ',n_processes, ' processes.')
@@ -75,6 +71,7 @@ event.close()
 # select all tempoirary files
 tmp_step_list = glob.glob("tmp_step*.txt")
 tmp_event_list = glob.glob("tmp_event*.txt")
+print(len(tmp_event_list))
 
 
 func.merge_tmp_tables(step_name, tmp_step_list)
@@ -89,65 +86,3 @@ for tmp_event in tmp_event_list:
     os.remove(tmp_event)
 
 
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-# TO DO: NEW FILE FOR PLOTS!!!
-
-# IMPORTO LE TABELLE
-
-step = pd.read_csv('step.txt', sep = '\t', index_col = False)
-event =  pd.read_csv('step.txt', sep = '\t', index_col = False)
-
-# 
-
-
-fig = plt.figure(figsize = (10,10))
-ax = plt.axes(projection='3d')
-
-for i in range(6):
-    x = event['x'][event['face'] == i]
-    y = event['y'][event['face'] == i]
-    z = event['z'][event['face'] == i]
-    #c = event['face'][event['face'] == i]
-    plt.plot(x,y,z, '.')
-        #c = c, cmap = 'viridis' )
-        
-plt.title('Distribuzione eventi')
-ax.view_init(25, 45)
-
-ax.axes.set_xlim3d(left=-30.0, right=30.0) 
-ax.axes.set_ylim3d(bottom=-30.0, top=30.0) 
-ax.axes.set_zlim3d(bottom=-30.0, top=30.0)
-ax.set_xlabel('x', fontsize = 12)
-ax.set_ylabel('y', fontsize = 12)
-ax.set_zlabel('z', fontsize = 12)
-plt.savefig('tot_eventi.png')
-plt.close()
-    
-#%%
-fig = plt.figure(figsize = (10,10))
-ax = plt.axes(projection='3d')
-plt.title("Primi 30 eventi ")
-ax.view_init(25, 45)
-
-for i in range (0,30):
-    
-    x = step['x'][step['evento'] == i]
-    y = step['y'][step['evento'] == i]
-    z = step['z'][step['evento'] == i]
-    plt.plot(x,y,z, alpha = 0.7)
-    
-ax.axes.set_xlim3d(left=0.0, right=6.0) 
-ax.axes.set_ylim3d(bottom=0.0, top=6.0) 
-ax.axes.set_zlim3d(bottom=0.0, top=6.0)
-ax.set_xlabel('x', fontsize = 12)
-ax.set_ylabel('y', fontsize = 12)
-ax.set_zlabel('z', fontsize = 12)
-plt.savefig('30_eventi.png')
-plt.show()
-#plt.close()
-
-
-          
-          

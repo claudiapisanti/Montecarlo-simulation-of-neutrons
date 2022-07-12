@@ -1,11 +1,10 @@
 # FUNCTIONS
-from logging import FileHandler
 import numpy as np
 from random import random
 import constants as c
 import shutil
 
-#%% FUNZIONI da mettere in un altro file
+
 
 def random_rescale(val_max, val_min = 0):
     """
@@ -163,18 +162,20 @@ def get_cs(E, cs_table):
 
     cs = [cs_tot, cs_el, cs_inel, 
           cs_h_tot, cs_h_el, cs_h_inel, 
-          cs_c_tot, cs_c_el, cs_c_inel] # cs[0] = totale, cs[1] = elastico, cs[2] = inelastico
-    cs = np.dot(cs, 10e-24) # converto la cs da barn a cm^2
-    l = np.dot(cs, c.n) # calcolo lambda
+          cs_c_tot, cs_c_el, cs_c_inel] # cs[0] = total, cs[1] = elastic, cs[2] = inelastic
+    cs = np.dot(cs, 10e-24) # convert cs from barn to cm^2
+    l = np.dot(cs, c.n) # lambda
 
     p_carbon = 9 * cs[6] / cs[0]
     p_proton = 10 * cs[3] / cs[0]
 
-    p_h_elastic = cs[4] / cs[3] # probabilità di avere scattering elastico
-    p_h_inelastic = cs[5] / cs[3] # probabilità di avere scattering inelastico rispetto alla probabilità di avere scattering
+    # for hydrogen (H)
+    p_h_elastic = cs[4] / cs[3] # probability of having elastic scattering
+    p_h_inelastic = cs[5] / cs[3] # probability of having inelastic scattering with respect to total probability of having scattering 
 
-    p_c_elastic = cs[7] / cs[6] # probabilità di avere scattering elastico
-    p_c_inelastic = cs[8] / cs[6] # probabilità di avere scattering inelastico rispetto alla probabilità di avere scattering
+    # for carbon(C)
+    p_c_elastic = cs[7] / cs[6] # probability of having elastic scattering
+    p_c_inelastic = cs[8] / cs[6] # probability of having inelastic scattering with respect to total probability of having scattering 
 
     p = [p_carbon, p_proton,
          p_h_elastic, p_h_inelastic,
@@ -204,7 +205,8 @@ def find_nearest(array,value):
         the index of the value to be found.
 
     """
-    idx = np.searchsorted(array, value, side="right")
+
+    idx = np.searchsorted(array, value, side="right") 
 
     assert idx < len(array), "Index value exceeds array length."
 
@@ -213,7 +215,7 @@ def find_nearest(array,value):
 
 def face_func():
     """
-    Randomly select a face of the rectangular extended source
+    Randomly select a face of the rectangular extended source, given the cumulativefunction (c.face_prob_cum).
 
     Returns:
     -------
@@ -256,7 +258,7 @@ def from_sph_coord_to_xyz(r,phi,theta,x0= 0.,y0=0.,z0=0.):
 
     """
 
-    # ANGOLO IN RADIANTI!!!!
+    # NB: angle is in radiants
     
     x1 = x0 + r * np.cos(phi) * np.sin(theta)
     y1 = y0 + r * np.sin(phi) * np.sin(theta)
@@ -312,7 +314,7 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
         table_name : filename of the final table
         tmp_tables_list : list of temporary tables filenames
     """
-    # Sort list to obtain ordered chromosomes in the final table
+
     tmp_tables_list.sort()
 
     with open(table_name,'a') as table:
@@ -322,9 +324,8 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 
 
 
-
-#### PROVO A VEDERE SE, LEGGENDO DI VOLTA IN VOLTA LE COSE DAL FILE.C MI ESCE MEGLIO IL FILE.
-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# single event
 def evento_letto_da_const(i, cs_table): # [cs_table, k]
     """run on the single event evento"""
 
@@ -336,14 +337,14 @@ def evento_letto_da_const(i, cs_table): # [cs_table, k]
     with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
         
         
-        if(c.type_source == 'EST'): # ottengo una posizione iniziale
+        if(c.type_source == 'EST'): # get initial position
             face = face_func()
             pos_source = source_position_est(face)
-        elif(c.type_source == 'SPH'): # ottengo una posizione finale
+        elif(c.type_source == 'SPH'): # get initial position
             face = 0
             phi_source = random_rescale(np.pi)
             theta_source = random_rescale(2*np.pi)
-            pos_source = from_sph_coord_to_xyz(c.sph_radius,phi_source,theta_source,c.pos_max[0]/2.,c.pos_max[1]/2.,c.pos_max[2]/2.) # centrato al centro del sistema
+            pos_source = from_sph_coord_to_xyz(c.sph_radius,phi_source,theta_source,c.pos_max[0]/2.,c.pos_max[1]/2.,c.pos_max[2]/2.) # it is centered in the centre of the system
         elif(c.type_source == 'PUNT'): 
             face = 0
             pos_source = c.pos_source
@@ -362,90 +363,84 @@ def evento_letto_da_const(i, cs_table): # [cs_table, k]
         x0 = pos_source[0]
         y0 = pos_source[1]
         z0 = pos_source[2]
-        pos = np.array([0.,0.,0.]) # ?? inizializzo
+        pos = np.array([0.,0.,0.]) # initialize
         
-        step.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\n') # sorgente
+        step.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\n') # source position for each event
 
         DeltaE = 0
         theta_scat = 0
         while( (pos >= c.pos_min).all() & (pos <= c.pos_max).all()):
         
-            # mi conviene lavorare in coordinate polari
+            # it is easier to work in spherical coordinates
 
-            # direzione iniziale
+            # initial direction
             if j == 0:
-                phi = random_rescale(2*np.pi) # phi è compreso tra 0 e 2*pi 
-                theta = random_rescale(np.pi)   # thetha è compreso tra 0 e pi
+                phi = random_rescale(2*np.pi) # phi is inside [0 ,2*pi ]
+                theta = random_rescale(np.pi)   # thetha is inside [] 0 e pi]
             else: 
                 rand = random_rescale(1, -1)
                 phi = phi + r * np.sin(theta_scat)* np.cos(r)  
                 theta = theta + r * np.sin(theta_scat) * np.sin(r) 
-            # percorso fatto dal neutrone
-            p_interaction = random() # probabilità di interazione con cui calcolare lo spazio
-            r = - l[0] * np.log(1-p_interaction)# sto usando la BEER LAMBERT LAW ma non so se posso usarla per i fotoni # uso lambda della cross section totale
             
-            # traduco le coordinate sferuche in coordinate cartesiane (x,y,z)
-            pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # posizione dell'interazione
+
+            p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
+            r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
             
-            # controllo di stare dentro il rettangolo
+            # translate sphericla coordinates into cartesian coordinates
+            pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
+            
+            # check if the particle is inside the scintillatro
             if(  (pos >= c.pos_min ).all()  & (pos <= c.pos_max).all() ):
-    
-                # segno quante interazioni accadono in un subrettangolo
-                # if( (pos >= c.pos_min ).all() & (pos <= c.sub_rect).all() ): args[3] = args[3] + 1
-                    
-                # vedo se il protone interagisce con un carbonio o con un protone
+                        
+                # check if neutron interact with carbon or proton
                 p_atom = random()
-                if (p_atom <= p[0]): # allora interagisce con il carbonio
-                    # vedo se fa urto elastico o inelastico
+                if (p_atom <= p[0]): # interact with carbon
+                    # elastic or inelastic interaction?
                     p_type = random() 
                 
-                    if(p_type <= p[4] ): # ovvero se sono all'interno di uno scattering ELASTICO con il carbonio
+                    if(p_type <= p[4] ): # if elastic scattering with carbon
                         A = 12
                         step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
                         
-                        # calcolo la perdita di energia e di conseguenza il theta_sc (da capire)
+                        # calculate energy loss and so theta scattering of the neutron
 
                         theta_scat, E = scattering_angle(E, A)
-                        if E < c.MeV1: break # QUESTA SOGLIA VA ABBASSATA (?)
-                        j = j+1 # step successivo
+                        if E < c.MeV1: break # energy threshold (for the energy resolution of my detector)
+                        j = j+1 # next step
 
                     
-                    else: # ovvero se il neutrone fa scattering inelastico
+                    else: # if inelastic scattering with carbon
                         step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
                         event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
                         j = j+1 # step successivo
 
                         break
 
-                else: # allora interagisce con il protone
-                    # vedo se fa urto elastico o inelastico
+                else: # interact with proton
+                    # check type of interaction (elastic) or inelastic
                     p_type = random() 
                 
-                    if(p_type <= p[2] ): # ovvero se sono all'interno di uno scattering elastico con il protone
+                    if(p_type <= p[2] ): # if elastic scattering with proton
                         A = 1
                         step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
                         
-                        
-                        # calcolo la perdita di eienrgia e di conseguenza il theta_sc (da capire)
+                        # calculate energy loss and so theta scattering of the neutron
                         theta_scat, E = scattering_angle(E, A)
-                        if E < c.MeV1: break # QUESTA SOGLIA VA ABBASSATA (?)
+                        if E < c.MeV1: break # energy thershold (for the energy resolution of my detector)
 
-                        j = j+1 # step successivo
+                        j = j+1 # next step
 
                     
-                    else: # ovvero se il neutrone fa scattering inelastico
+                    else: # if inelastic scattering with proton
                         step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
                         event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
                         
-                        j = j+1 # step successivo
+                        break # I'm interested only in multiple scattering
+                    
+                    
 
-                        break
-                    
-                    
-            elif((pos!=pos_source).all()):
-                event.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
+            else: # if particle exit the scintillator
+                if ((pos!=pos_source).all()):
+                    event.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
         
             x0,y0,z0 = pos
-
-            
-        # return args[3]

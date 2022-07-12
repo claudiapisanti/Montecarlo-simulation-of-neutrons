@@ -1,4 +1,3 @@
-#import functions as func
 from re import sub
 import numpy as np
 
@@ -17,9 +16,7 @@ def get_pos(f):
         Position array of data from input file (x,y,z coordinates)
 
     """
-    
     string = f.readline() 
-    #print(string)
     x = float(string.split(' ')[0])
     y = float(string.split(' ')[1])
     z = float(string.split(' ')[2])
@@ -34,13 +31,13 @@ def get_pos(f):
 
 # open files
 w = open('constants.py', 'w')
-f = open("physical_characteristics.txt", "r")
+f = open("physical_characteristics.txt", "r") 
 
 # limit value for energy (maximum and minimum value of cs.txt)
 Maximum_energy = 98100000
 Minimum_energy = 1100000
 
-# inizializzo
+# inizializing
 E_mono = 0
 E_max = 0
 E_min = 0
@@ -55,19 +52,18 @@ pos_source = [0.,0.,0.]
 Na = 6.0221409e23 # Avogadro's number
 MeV1 = 1000000 # = 1 MeV
 
-# il mio materiale e il polyvinyl toluene
-# E = 100 # eV energia (è monoenergetico) # !!!!!!!!!!!!
-rho = 1.023 #g/cm^3 densità                 
-Mmol = 118. # g/mol massa molare 
-n = Na*rho/Mmol # densità di particelle target 
+# my material is polyvinyl toluene
+rho = 1.023 #g/cm^3 density                
+Mmol = 118. # g/mol molar mass
+n = Na*rho/Mmol # density of molecules in the target
 
 
-# vedo che energia prendere
+# select energy distribution type (MONO, UNIF) = monoenergetic, uniformly distributed in a range
 line  = f.readline() # line 1 --- type of source
 En_type = line.split(' ')[0]
-if(En_type == 'MONO'): # per una sorgente monoenergetica mi ottengo le cross section dal file.txt
+if(En_type == 'MONO'): # monoenergetic source
     line = f.readline() # in eV # line 2 --- energy of source
-    E_mono = float(line.split(' ')[0])
+    E_mono = float(line.split(' ')[0]) # get energy of particles form physical_characteristics file
 
     # check if E_mono is inside the proper range
     assert E_mono < Maximum_energy, "Energy is larger than maximum energy given in cs.txt. Correci physical_caracteristics.txt"
@@ -98,40 +94,36 @@ else:
 
 
 
-# GENERO UN RETTANGOLO (lo scintillatore) E UN SUBRETTANGOLO (detectabile) -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
-pos_max = get_pos(f) # read line 3 --- geometrical boundaries of the scintillatro
+# get rectangle dimensions (scintillator)
+pos_max = get_pos(f) # read line 3 --- geometrical boundaries of the scintillator
 pos_min = np.array([0,0,0])
 
 print("\nLo scintillatore ha dimensioni ", 
     pos_max[0], 'x', pos_max[1],'x', pos_max[2], 'cm')
 
-# seleziono una zona di interesse dove contare il numero di eventi
-sub_rect = get_pos(f) # read line 4 --- geometrical boundaries for sub-rectangle of interest
+# # seleziono una zona di interesse dove contare il numero di eventi
+# sub_rect = get_pos(f) # read line 4 --- geometrical boundaries for sub-rectangle of interest
   
 
-if( (sub_rect >= pos_max ).any()):
-        print ('errore: il la sottoregione eccede la regione. Aggiusta il tuo file')
-        quit() # chiudi il programma se i dati di input sono sbagliati
+# if( (sub_rect >= pos_max ).any()):
+#         print ('errore: il la sottoregione eccede la regione. Aggiusta il tuo file')
+#         quit() # chiudi il programma se i dati di input sono sbagliati
       
-print("\nIl la sottoregione ha coordinate (0.0,", sub_rect[0], '; 0.0,', sub_rect[1],';0.0,', sub_rect[2], ')')
 
-
-# METTI UN WHILE PER VEDERE CONTINUARE A CHIEDERE INPUT SE IL PROGRAMMA FINO A CHE NON VANNO BENE LE CONDIZIONI SE IL PROGRAMMA 
-# SIA PER SUBRECT SIA PER LA SORGENTE
 
 ###########################################################
 ###########################################################
-# DEFINISCO IL TIPO DI SORGENTE (puntiforme/estesa/sferica)
-type_source = f.readline().split(' ')[0] # line 5 --- type of source : EST, PUNT, SPH
+# define type of source distribution (PUNT, SPH, EST)= point, spherical, extended
+type_source = f.readline().split(' ')[0] # line 4 --- type of source : EST, PUNT, SPH
 
 
 
-# POSIZIONE SORGENTE
+# souce position
 
-if (type_source == 'PUNT'):
+if (type_source == 'PUNT'): # pointlike
     print('puntiforme')
-    # posizione della sorgente
-    pos_source = get_pos(f) # line 6 --- position of point source
+    # get source position
+    pos_source = get_pos(f) # line 5 --- position of point source
     face = 0
 
     while((pos_source >= pos_max ).any()):
@@ -140,40 +132,31 @@ if (type_source == 'PUNT'):
 
 
     print("La sorgente è situata in (", pos_source[0],',', pos_source[1], ',', pos_source[2], ')')
-elif(type_source == 'EST'):
-    print('esteso')
 
-    # SCELTA DELLA FACCIA
+elif(type_source == 'EST'): #  extended source (= a rectanglular surface around the scintillator)
+
+    # choice of the face in which the particle is generated
     face_prob = np.zeros(6)
     face_prob_cum = np.zeros(6)
-    face_prob_line = f.readline() # line 6 --- face probbilities
+    face_prob_line = f.readline() # line 5 --- face probabilities
 
     for i in range(6):
        face_prob[i] = float(face_prob_line.split(' ')[i])
 
 
     for i in range(6):
-        face_prob_cum[i] = sum(face_prob[:(i+1)]) / sum(face_prob) # cumulativa
+        face_prob_cum[i] = sum(face_prob[:(i+1)]) / sum(face_prob) # cumulative function  of face distribution probability (it is a stepped function)
 
-    print("------------> ", face_prob, sum(face_prob), face_prob_cum)
-elif(type_source == 'SPH'):
-    print('spherical')
-    sph_radius = float(f.readline().split(' ')[0]) # (cm) # non mi metto esattamente sul bordo perché potrei avere problemi al bordo /2 perché metto il centro della sfera al centro dello scintillatore
-    print('-------------------> '+ str(sph_radius))
-    face = 0 # otw mi da errore
+elif(type_source == 'SPH'): # spherical
+    sph_radius = float(f.readline().split(' ')[0]) # (cm) 
+    face = 0 # for step.txt and event.txt filling 
 
 
 
-##############################################################
-##############################################################
-##############################################################
-# MONTECARLO
-
-xs = []
-ys = []
-zs = []
-
-k = 0
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# WRITE ON CONSTANTS.PY
 w.write("import numpy as np\n\n")
 
 w.write(f"type_source = '{type_source}'\n")
@@ -190,9 +173,6 @@ w.write(f'pos_max = np.array([{pos_max[0]},{pos_max[1]},{pos_max[2]}])\n')
 w.write(f'pos_min = np.array([{pos_min[0]},{pos_min[1]},{pos_min[2]}])\n')
 w.write(f'sph_radius = {sph_radius}\n')
 w.write(f'pos_source = np.array([{pos_source[0]},{pos_source[1]},{pos_source[2]}])\n')
-#w.write(f'face = {face}\n')
-w.write(f'sub_rect = np.array([{sub_rect[0]},{sub_rect[1]},{sub_rect[2]}])\n')
-#w.write(f'k = {k}\n')
 w.write(f'MeV1 = {MeV1}')
 
 
