@@ -1,5 +1,4 @@
-from functions import random_rescale, source_position_est, get_cs, find_nearest, face_func, from_sph_coord_to_xyz
-#get_cs, find_nearest, face_func, from_sph_coord_to_xyz, scattering_angle, evento_letto_da_const
+from functions import random_rescale, source_position_est, get_cs, find_nearest, face_func, from_sph_coord_to_xyz, scattering_angle
 from make_constants import get_pos
 import numpy as np
 import constants as c
@@ -218,21 +217,25 @@ def test_face_func_1():
     Tests:
         - if output is int
     """
-    
-    value = face_func()
+    if c.type_source == 'EST':
+        value = face_func()
+        print (value)
 
-    assert type(value) == int
+        assert type(value) == int
+
 
 def test_face_func_2():
     """
     Tests:
         - if value correspond to all faces number [1,2,3,4,5,6]
     """
+    
+    if c.type_source == 'EST':
+        value = face_func()
+        faces = [1,2,3,4,5,6] # faces of the rectangle
+    
+        assert value in faces
 
-    value = face_func()
-    faces = [1,2,3,4,5,6] # faces of the rectangle
-
-    assert value in faces
 
 def test_from_sph_coord_to_xyz_1():
     """
@@ -254,6 +257,50 @@ def test_from_sph_coord_to_xyz_1():
     xyz = round_data(xyz,2)
     
     assert (xyz == [0.43, 0.25, 0.87]).all()
+
+
+
+def test_scattering_angle_1():
+    """
+    Test:
+        - if energy is in the proper range
+    """
+
+    E0 = 1
+    A = 12
+    Delta_E = ((A-1)/(A+1))**2*E0
+
+    E_min = E0 - Delta_E
+
+    theta_scat, E = scattering_angle(E0, A)
+
+    print(theta_scat, E, E_min )
+
+    assert E <= E0, "Energy should be <= of initial energy"
+    assert E >= Delta_E, "Energy should be >= of the minimum energy"
+
+
+def test_scattering_angle():
+    """
+    Test:
+        - if theta scattering is between 0 and pi radiants
+    """
+    
+    E0 = 1
+    A = 12
+    Delta_E = ((A-1)/(A+1))**2*E0
+
+    E_min = E0 - Delta_E
+
+    theta_scat, E = scattering_angle(E0, A)
+
+    assert theta_scat < np.pi, "scattering angle should be smallet than pi"
+    assert theta_scat > 0, "scattering angle should be larger than 0"
+
+
+
+#test_scattering_angle_1()
+    
 
 
 
