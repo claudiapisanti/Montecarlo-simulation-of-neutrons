@@ -1,5 +1,5 @@
-from re import sub
 import numpy as np
+import multiprocessing as mp
 
 #########################################################
 
@@ -57,6 +57,16 @@ rho = 1.023 #g/cm^3 density
 Mmol = 118. # g/mol molar mass
 n = Na*rho/Mmol # density of molecules in the target
 
+# number of particles generated
+line = f.readline() # line 0 -- number of particles
+N = int(line.split(' ')[0])
+assert type(N) == int, 'number of particles should be an integer number. Correct physical_caracteristics.txt'
+
+# count number of processes available
+n_processes = mp.cpu_count()
+if n_processes != 0 : n_processes = n_processes - 1 # in order not to slow the computer too much
+
+
 
 # select energy distribution type (MONO, UNIF) = monoenergetic, uniformly distributed in a range
 line  = f.readline() # line 1 --- type of source
@@ -66,15 +76,15 @@ if(En_type == 'MONO'): # monoenergetic source
     E_mono = float(line.split(' ')[0]) # get energy of particles form physical_characteristics file
 
     # check if E_mono is inside the proper range
-    assert E_mono < Maximum_energy, "Energy is larger than maximum energy given in cs.txt. Correci physical_caracteristics.txt"
-    assert E_mono > Minimum_energy, "Energy is smaller than minimun enrgy given in cs.txt. Correci physical_caracteristics.txt"
+    assert E_mono < Maximum_energy, "Energy is larger than maximum energy given in cs.txt. Correct physical_caracteristics.txt"
+    assert E_mono > Minimum_energy, "Energy is smaller than minimun enrgy given in cs.txt. Correct physical_caracteristics.txt"
 
     
 
 
 
 elif(En_type == 'UNIF'):
-    line = f.readline() # in eV  # line 2 ---energy of source
+    line = f.readline() # in eV  # line 2 -- energy of source
     E_min = float(line.split(' ')[0])
     E_max = float(line.split(' ')[1])
 
@@ -98,18 +108,6 @@ else:
 pos_max = get_pos(f) # read line 3 --- geometrical boundaries of the scintillator
 pos_min = np.array([0,0,0])
 
-print("\nLo scintillatore ha dimensioni ", 
-    pos_max[0], 'x', pos_max[1],'x', pos_max[2], 'cm')
-
-# # seleziono una zona di interesse dove contare il numero di eventi
-# sub_rect = get_pos(f) # read line 4 --- geometrical boundaries for sub-rectangle of interest
-  
-
-# if( (sub_rect >= pos_max ).any()):
-#         print ('errore: il la sottoregione eccede la regione. Aggiusta il tuo file')
-#         quit() # chiudi il programma se i dati di input sono sbagliati
-      
-
 
 ###########################################################
 ###########################################################
@@ -121,7 +119,6 @@ type_source = f.readline().split(' ')[0] # line 4 --- type of source : EST, PUNT
 # souce position
 
 if (type_source == 'PUNT'): # pointlike
-    print('puntiforme')
     # get source position
     pos_source = get_pos(f) # line 5 --- position of point source
     face = 0
@@ -129,9 +126,6 @@ if (type_source == 'PUNT'): # pointlike
     while((pos_source >= pos_max ).any()):
         print ('errore: il la sorgente è fuori dallo scintillatore. Correggi il file.txt')
         quit()
-
-
-    print("La sorgente è situata in (", pos_source[0],',', pos_source[1], ',', pos_source[2], ')')
 
 elif(type_source == 'EST'): #  extended source (= a rectanglular surface around the scintillator)
 
@@ -156,9 +150,12 @@ elif(type_source == 'SPH'): # spherical
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+
 # WRITE ON CONSTANTS.PY
 w.write("import numpy as np\n\n")
 
+w.write(f"N = {N}\n")
+w.write(f"n_processes = {n_processes}\n")
 w.write(f"type_source = '{type_source}'\n")
 w.write(f"En_type = '{En_type}'\n")
 w.write(f'E_mono = {E_mono}\n')

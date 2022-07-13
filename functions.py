@@ -4,6 +4,8 @@ from random import random
 import constants as c
 import shutil
 
+import time
+
 
 
 def random_rescale(val_max, val_min = 0):
@@ -325,122 +327,150 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # single event
-def evento_letto_da_const(i, cs_table): # [cs_table, k]
-    """run on the single event evento"""
+def event_func(i, cs_table): # [cs_table, k]
+    """run on the single event"""
+    N_i = int(c.N / c.n_processes)
+    
 
-
-    # create temporary file
-    step_name = "tmp_step%d.txt" % (i)
-    event_name = "tmp_event%d.txt" % (i)
-
-    with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
+    for w in range(N_i): # run a certain number of events
+        e = w + (i * N_i) +1 # number of the event
         
         
-        if(c.type_source == 'EST'): # get initial position
-            face = face_func()
-            pos_source = source_position_est(face)
-        elif(c.type_source == 'SPH'): # get initial position
-            face = 0
-            phi_source = random_rescale(np.pi)
-            theta_source = random_rescale(2*np.pi)
-            pos_source = from_sph_coord_to_xyz(c.sph_radius,phi_source,theta_source,c.pos_max[0]/2.,c.pos_max[1]/2.,c.pos_max[2]/2.) # it is centered in the centre of the system
-        elif(c.type_source == 'PUNT'): 
-            face = 0
-            pos_source = c.pos_source
-        
-        if(c.En_type == 'UNIF') :
-            E = random_rescale(c.E_max, c.E_min)
-            cs, l, p = get_cs(E,cs_table)
-        elif(c.En_type == 'MONO'):
-            E = c.E_mono
-            cs, l, p = get_cs(c.E_mono, cs_table)
+
+        # create temporary file
+        step_name = "tmp_step%d.txt" % (i)
+        event_name = "tmp_event%d.txt" % (i)
 
 
-        
-        j = 0
-        p_type = 0.
-        x0 = pos_source[0]
-        y0 = pos_source[1]
-        z0 = pos_source[2]
-        pos = np.array([0.,0.,0.]) # initialize
-        
-        step.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\n') # source position for each event
+        with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
 
-        DeltaE = 0
-        theta_scat = 0
-        while( (pos >= c.pos_min).all() & (pos <= c.pos_max).all()):
-        
-            # it is easier to work in spherical coordinates
-
-            # initial direction
-            if j == 0:
-                phi = random_rescale(2*np.pi) # phi is inside [0 ,2*pi ]
-                theta = random_rescale(np.pi)   # thetha is inside [] 0 e pi]
-            else: 
-                rand = random_rescale(1, -1)
-                phi = phi + r * np.sin(theta_scat)* np.cos(r)  
-                theta = theta + r * np.sin(theta_scat) * np.sin(r) 
             
+            if(c.type_source == 'EST'): # get initial position
+                face = face_func()
+                pos_source = source_position_est(face)
+            elif(c.type_source == 'SPH'): # get initial position
+                face = 0
+                phi_source = random_rescale(np.pi)
+                theta_source = random_rescale(2*np.pi)
+                pos_source = from_sph_coord_to_xyz(c.sph_radius,phi_source,theta_source,c.pos_max[0]/2.,c.pos_max[1]/2.,c.pos_max[2]/2.) # it is centered in the centre of the system
+            elif(c.type_source == 'PUNT'): 
+                face = 0
+                pos_source = c.pos_source
+            
+            start2 = time.time()
+            if(c.En_type == 'UNIF') :
+                E = random_rescale(c.E_max, c.E_min)
+                cs, l, p = get_cs(E,cs_table)
+            elif(c.En_type == 'MONO'):
+                E = c.E_mono
+                cs, l, p = get_cs(c.E_mono, cs_table)
 
-            p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
-            r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
+            end2 = time.time()
+            # print('MONO --', end2 - start2)
+
+
+            start = time.time()
+            j = 0
+            p_type = 0.
+            x0 = pos_source[0]
+            y0 = pos_source[1]
+            z0 = pos_source[2]
+            pos = np.array([0.,0.,0.]) # initialize
             
-            # translate sphericla coordinates into cartesian coordinates
-            pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
-            
-            # check if the particle is inside the scintillatro
-            if(  (pos >= c.pos_min ).all()  & (pos <= c.pos_max).all() ):
-                        
-                # check if neutron interact with carbon or proton
-                p_atom = random()
-                if (p_atom <= p[0]): # interact with carbon
-                    # elastic or inelastic interaction?
-                    p_type = random() 
+            step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\n') # source position for each event
+
+            DeltaE = 0
+            theta_scat = 0
+            while( (pos >= c.pos_min).all() & (pos <= c.pos_max).all()):
+
+                # it is easier to work in spherical coordinates
+
+                # initial direction
+                if j == 0:
+                    phi = random_rescale(2*np.pi) # phi is inside [0 ,2*pi ]
+                    theta = random_rescale(np.pi)   # thetha is inside [] 0 e pi]
+                else: 
+                    rand = random_rescale(1, -1)
+                    phi = phi + r * np.sin(theta_scat)* np.cos(r)  
+                    theta = theta + r * np.sin(theta_scat) * np.sin(r) 
                 
-                    if(p_type <= p[4] ): # if elastic scattering with carbon
-                        A = 12
-                        step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
-                        
-                        # calculate energy loss and so theta scattering of the neutron
 
-                        theta_scat, E = scattering_angle(E, A)
-                        if E < c.MeV1: break # energy threshold (for the energy resolution of my detector)
-                        j = j+1 # next step
-
-                    
-                    else: # if inelastic scattering with carbon
-                        step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
-                        event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
-                        j = j+1 # step successivo
-
-                        break
-
-                else: # interact with proton
-                    # check type of interaction (elastic) or inelastic
-                    p_type = random() 
+                p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
+                r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
                 
-                    if(p_type <= p[2] ): # if elastic scattering with proton
-                        A = 1
-                        step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
+                # translate sphericla coordinates into cartesian coordinates
+                pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
+                
+                # check if the particle is inside the scintillatro
+                if(  (pos >= c.pos_min ).all()  & (pos <= c.pos_max).all() ):
+                            
+                    # check if neutron interact with carbon or proton
+                    p_atom = random()
+                    if (p_atom <= p[0]): # interact with carbon
+                        # elastic or inelastic interaction?
+                        p_type = random() 
+                    
+                        if(p_type <= p[4] ): # if elastic scattering with carbon
+                            A = 12
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
+                            
+                            # calculate energy loss and so theta scattering of the neutron
+
+                            theta_scat, E = scattering_angle(E, A)
+                            if E < c.MeV1: break # energy threshold (for the energy resolution of my detector)
+                            j = j+1 # next step
+
                         
-                        # calculate energy loss and so theta scattering of the neutron
-                        theta_scat, E = scattering_angle(E, A)
-                        if E < c.MeV1: break # energy thershold (for the energy resolution of my detector)
+                        else: # if inelastic scattering with carbon
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                            event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
+                            j = j+1 # step successivo
 
-                        j = j+1 # next step
+                            break
 
+                    else: # interact with proton
+                        # check type of interaction (elastic) or inelastic
+                        p_type = random() 
                     
-                    else: # if inelastic scattering with proton
-                        step.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
-                        event.write(f'{i}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
+                        if(p_type <= p[2] ): # if elastic scattering with proton
+                            A = 1
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
+                            
+                            # calculate energy loss and so theta scattering of the neutron
+                            theta_scat, E = scattering_angle(E, A)
+                            if E < c.MeV1: break # energy thershold (for the energy resolution of my detector)
+
+                            j = j+1 # next step
+
                         
-                        break # I'm interested only in multiple scattering
-                    
-                    
+                        else: # if inelastic scattering with proton
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                            event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
+                            
+                            break # I'm interested only in multiple scattering
+                        
+                        
 
-            else: # if particle exit the scintillator
-                if ((pos!=pos_source).all()):
-                    event.write(f'{i}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
-        
-            x0,y0,z0 = pos
+                else: # if particle exit the scintillator
+                    if ((pos!=pos_source).all()):
+                        event.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
+            
+                x0,y0,z0 = pos
+
+
