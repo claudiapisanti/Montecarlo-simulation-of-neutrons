@@ -1,5 +1,5 @@
 """
-BLABLABLA
+Utils for montecarlo program.
 """
 
 # FUNCTIONS
@@ -7,9 +7,11 @@ import numpy as np
 from random import random
 import constants as c
 import shutil
+import sys
 
 import time
 
+from tqdm import tqdm
 
 
 def random_rescale(val_max, val_min = 0):
@@ -348,11 +350,10 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # single event
 def event_func(i, cs_table): # [cs_table, k]
-    """run on the single event"""
+    """run events"""
     N_i = int(c.N / c.n_processes)
-    
 
-    for w in range(N_i): # run a certain number of events
+    for w in tqdm(range(N_i)): # run a certain number of events
         e = w + (i * N_i) +1 # number of the event
         
         
@@ -478,5 +479,6 @@ def event_func(i, cs_table): # [cs_table, k]
                         event.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
             
                 x0,y0,z0 = pos
+
 
 

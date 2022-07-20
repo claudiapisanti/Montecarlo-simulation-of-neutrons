@@ -16,6 +16,7 @@ def get_pos(f):
         Position array of data from input file (x,y,z coordinates)
 
     """
+
     string = f.readline() 
     x = float(string.split(' ')[0])
     y = float(string.split(' ')[1])

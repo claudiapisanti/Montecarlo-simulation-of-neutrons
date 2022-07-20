@@ -23,13 +23,12 @@ elif len(sys.argv)==2:
 #print(macro)
 
 
-command = f"python3 make_constants.py {macro}"
+command = "python3 make_constants.py "+ macro
 os.system( command )
 
 # my functions
 import constants as c # I want to first generate the file, and then use it
 import functions as func
-
 
 # fix seed for random
 seed(1)
