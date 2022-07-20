@@ -1,5 +1,5 @@
 from functions import random_rescale, source_position_est, get_cs, find_nearest, face_func, from_sph_coord_to_xyz, scattering_angle
-from make_constants import get_pos
+# from make_constants import get_pos
 import numpy as np
 import constants as c
 import os
@@ -109,23 +109,23 @@ def test_source_position_est_1():
 
 
 
-def test_get_pos_1():
-    """
-    Tests:
-        - if the function read properly a line on a text.txt
-    """
+# def test_get_pos_1():
+#     """
+#     Tests:
+#         - if the function read properly a line on a text.txt
+#     """
 
-    file = open("test_file.txt", "w")
+#     file = open("test_file.txt", "w")
     
-    file.write('1 2 3 #position')
-    file.close()
+#     file.write('1 2 3 #position')
+#     file.close()
 
-    file = open("test_file.txt", "r")
-    pos = get_pos(file)
-    assert (pos == np.array([1.,2.,3.])).all()
+#     file = open("test_file.txt", "r")
+#     pos = get_pos(file)
+#     assert (pos == np.array([1.,2.,3.])).all()
 
-    file.close()
-    os.remove("test_file.txt")
+#     file.close()
+#     os.remove("test_file.txt")
 
 def my_dataframe_and_energy():
     cs = {'E': [0.9,1.1], 
