@@ -34,6 +34,8 @@ Then requirements can be installed by using pip:
 
 ```
 	git clone https://github.com/claudiapisanti/Montecarlo-simulation-of-neutrons.git
+	cd Montecarlo-simulation-of-neutrons/
+	git checkout master
 	pip install -r requirements.txt
 ```
 
