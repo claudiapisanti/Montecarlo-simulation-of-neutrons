@@ -70,7 +70,7 @@ if __name__ == "__main__":
         
 
     end = time.time()
-    print("TIME MP= ", end - start)
+    print("Simulation finished in = ", round(end - start, 3), f"seconds with {c.n_processes} processes")
 
 
     # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
