@@ -4,6 +4,7 @@ import numpy as np
 import constants as c
 import os
 import pandas as pd
+from random import seed
 
 
 
@@ -14,6 +15,7 @@ def test_random_rescale_1():
     Tests:
         - if output val is inside the asked range
     """
+
     val_min = -1
     val_max = 1
     val = random_rescale(val_max, val_min)
@@ -45,7 +47,29 @@ def test_random_rescale_2():
     for i in range(bins):
         chisq += (expected[i] - observed[i])**2  / expected[i]
 
-    assert chisq < confidence_interval # confidenc interval of 0.99 (from tables)
+    assert chisq < confidence_interval # confidence interval of 0.99 (from tables)
+
+def test_random_rescale_3():
+    """
+    Tests:
+	- if, given a fixed seed, the output of random_rescale() is fixed.
+    """
+    seed (42)
+    val_min = -1
+    val_max = 1
+
+    val = random_rescale(val_max, val_min)
+    
+    val = round(val, 4)
+
+    assert val == 0.2789
+
+
+
+
+
+
+
 
 def test_source_position_est_1():
     """
@@ -297,36 +321,4 @@ def test_scattering_angle():
     assert theta_scat < np.pi, "scattering angle should be smallet than pi"
     assert theta_scat > 0, "scattering angle should be larger than 0"
 
-
-
-#test_scattering_angle_1()
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

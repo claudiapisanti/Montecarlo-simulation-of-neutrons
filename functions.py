@@ -1,3 +1,7 @@
+"""
+BLABLABLA
+"""
+
 # FUNCTIONS
 import numpy as np
 from random import random
@@ -393,7 +397,7 @@ def event_func(i, cs_table): # [cs_table, k]
             z0 = pos_source[2]
             pos = np.array([0.,0.,0.]) # initialize
             
-            step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\n') # source position for each event
+            step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\t{E}\n') # source position for each event
 
             DeltaE = 0
             theta_scat = 0
@@ -428,17 +432,19 @@ def event_func(i, cs_table): # [cs_table, k]
                     
                         if(p_type <= p[4] ): # if elastic scattering with carbon
                             A = 12
-                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
                             
                             # calculate energy loss and so theta scattering of the neutron
-
                             theta_scat, E = scattering_angle(E, A)
                             if E < c.MeV1: break # energy threshold (for the energy resolution of my detector)
+
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\t{E}\n')
+                            
                             j = j+1 # next step
+                            
 
                         
                         else: # if inelastic scattering with carbon
-                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\t{E}\n')
                             event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
                             j = j+1 # step successivo
 
@@ -450,17 +456,17 @@ def event_func(i, cs_table): # [cs_table, k]
                     
                         if(p_type <= p[2] ): # if elastic scattering with proton
                             A = 1
-                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\n')
                             
                             # calculate energy loss and so theta scattering of the neutron
                             theta_scat, E = scattering_angle(E, A)
                             if E < c.MeV1: break # energy thershold (for the energy resolution of my detector)
 
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\t{E}\n')
                             j = j+1 # next step
 
                         
                         else: # if inelastic scattering with proton
-                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\n')
+                            step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\tinelastic\t{E}\n')
                             event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\n')
                             
                             break # I'm interested only in multiple scattering

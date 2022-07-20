@@ -1,14 +1,16 @@
+1000 # number of particles generated
 MONO # tipo energia sorgente tipo scegli tra MONO, UNIF
-20000000 # energia sorgente
+9800000 # energia sorgente
 6 6 6 # dimensioni rettangolo
-5 5 5 # dimensioni del sotto-rettangolo
-EST # tipo di sorgente
-100 2 3 4 5 6 # probabilità per ogni sorgente
-###############################à
-
 PUNT # tipo di sorgente
 3 0 3 # posizione sorgente puntiforme
 
+###############################à
+
+
+
+EST # tipo di sorgente
+100 2 3 4 5 6 # probabilità per ogni sorgente
 
 
 
@@ -31,3 +33,4 @@ PUNT # tipo di sorgente
 
 SPH # tipo di sorgente
 150.1 # raggio della sorgente sferica: la sorgente è posizionata nel centro dello scintillatore
+

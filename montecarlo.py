@@ -7,9 +7,24 @@ import multiprocessing as mp
 import time
 import os
 import glob
+import sys
 
-# generate from physical characteristics a file of constants. This will reduce 
-os.system('python3 make_constants.py')
+# check argparse
+if len(sys.argv) < 2:
+    print ("Using macro file 'example.txt'")
+    macro = 'example.txt'
+elif len(sys.argv)==2:
+    macro = sys.argv[1]
+    print(f"Using file '{sys.argv[1]}'")
+
+# generate from input macro file a file of constants. This will reduce 
+
+#macro = argparse.ArgumentParser( description = 'Macro file' ) # read file
+#print(macro)
+
+
+command = f"python3 make_constants.py {macro}"
+os.system( command )
 
 # my functions
 import constants as c # I want to first generate the file, and then use it
@@ -58,35 +73,35 @@ if __name__ == "__main__":
     print("TIME MP= ", end - start)
 
 
-# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
-# FILE MERGING
-# merge all temporary files in a singel file
-step_name = "step.txt"
-event_name = "event.txt"
+    # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+    # FILE MERGING
+    # merge all temporary files in a singel file
+    step_name = "step.txt"
+    event_name = "event.txt"
 
-# write indentation
-step = open(step_name, 'w')
-event = open(event_name, 'w')
-# write column names (only the first time)
-step.write('evento\tstep\tx\ty\tz\tface\tinteraction\n')
-event.write('evento\tlast_step\tx\ty\tz\tface\n')
-step.close()
-event.close()
+    # write indentation
+    step = open(step_name, 'w')
+    event = open(event_name, 'w')
+    # write column names (only the first time)
+    step.write('event\tstep\tx\ty\tz\tface\tinteraction\tEnergy\n')
+    event.write('event\tlast_step\tx\ty\tz\tface\n')
+    step.close()
+    event.close()
 
-# select all tempoirary files
-tmp_step_list = glob.glob("tmp_step*.txt")
-tmp_event_list = glob.glob("tmp_event*.txt")
-print(len(tmp_event_list))
+    # select all tempoirary files
+    tmp_step_list = glob.glob("tmp_step*.txt")
+    tmp_event_list = glob.glob("tmp_event*.txt")
+    # print(len(tmp_event_list)) # count number of file created
 
-# merge al temporary files in a single file
-func.merge_tmp_tables(step_name, tmp_step_list)
-func.merge_tmp_tables(event_name, tmp_event_list)
+    # merge al temporary files in a single file
+    func.merge_tmp_tables(step_name, tmp_step_list)
+    func.merge_tmp_tables(event_name, tmp_event_list)
 
-# delete temporary file
-for tmp_step in tmp_step_list:
-    os.remove(tmp_step)
+    # delete temporary file
+    for tmp_step in tmp_step_list:
+        os.remove(tmp_step)
 
-for tmp_event in tmp_event_list:
-    os.remove(tmp_event)
+    for tmp_event in tmp_event_list:
+        os.remove(tmp_event)
 
 

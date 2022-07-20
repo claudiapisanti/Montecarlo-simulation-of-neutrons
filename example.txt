@@ -1,0 +1,6 @@
+1000 # number of particles generated
+MONO # tipo energia sorgente tipo scegli tra MONO, UNIF
+9800000 # energia sorgente
+6 6 6 # dimensioni rettangolo
+PUNT # tipo di sorgente
+3 0 3 # posizione sorgente puntiforme

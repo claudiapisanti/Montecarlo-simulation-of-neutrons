@@ -1,6 +1,6 @@
 import numpy as np
 import multiprocessing as mp
-
+import sys
 #########################################################
 
 def get_pos(f):
@@ -28,10 +28,12 @@ def get_pos(f):
 
 
 #########################################################
+# get file
+macro_file = sys.argv[1]
 
 # open files
 w = open('constants.py', 'w')
-f = open("physical_characteristics.txt", "r") 
+f = open(macro_file, "r") 
 
 # limit value for energy (maximum and minimum value of cs.txt)
 Maximum_energy = 98100000
@@ -79,7 +81,7 @@ if(En_type == 'MONO'): # monoenergetic source
     assert E_mono < Maximum_energy, "Energy is larger than maximum energy given in cs.txt. Correct physical_caracteristics.txt"
     assert E_mono > Minimum_energy, "Energy is smaller than minimun enrgy given in cs.txt. Correct physical_caracteristics.txt"
 
-    
+
 
 
 

@@ -1,0 +1,4 @@
+pytest>=6.2.2
+os>= 2.1.4
+glob>=0.7
+multiprocessing>=0.70.12
