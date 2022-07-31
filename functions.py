@@ -442,9 +442,40 @@ def event_func(i, cs_table, data): # [cs_table, k]
         event(i, cs_table, data, N_i, w,step_name, event_name)
 
 
+def get_source_position(type_source, source_params, pos_max, pos_min):
+    """
+    Get source position ...
+    """
+    if(type_source == 'EST'): # get initial position
+            #face = face_func(source_params)
+            pos_source = source_position_est(face, pos_max, pos_min)
+    elif(type_source == 'SPH'): # get initial position
+            #face = 0
+            phi_source = random_rescale(np.pi)
+            theta_source = random_rescale(2*np.pi)
+            pos_source = from_sph_coord_to_xyz(source_params,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # it is centered in the centre of the system
+    elif(type_source == 'PUNT'): 
+            #face = 0
+            pos_source = source_params
+
+    return pos_source
+
+def get_initial_energy(En_type, Energy, cs_table, n):
+    """
+    Get initial energy ...
+    """
+    if(En_type == 'UNIF') :
+        E = random_rescale(Energy[1], Energy[0])
+        cs, l, p = get_cs(E,cs_table, n)
+    elif(En_type == 'MONO'):
+        E = Energy
+        cs, l, p = get_cs(Energy, cs_table, n)
 
 
 def event(i, cs_table, data, N_i, w, step_name, event_name):
+    """
+    Single event ...
+    """
     e = w + (i * N_i) + 1 # number of the event
 
     with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
@@ -459,33 +490,11 @@ def event(i, cs_table, data, N_i, w, step_name, event_name):
         type_source = data['type_source'] # source geometrical distribution
         source_params = data['source_params'] # other params for the geometrical characterizzation of the source
 
-
+        # get initial params
+        pos_source = get_source_position(type_source, source_params, pos_max, pos_min)
+        E, l, p = get_initial_energy(En_type, Energy, cs_table, n)
         
-        if(type_source == 'EST'): # get initial position
-            face = face_func(source_params)
-            pos_source = source_position_est(face, pos_max, pos_min)
-        elif(type_source == 'SPH'): # get initial position
-            face = 0
-            phi_source = random_rescale(np.pi)
-            theta_source = random_rescale(2*np.pi)
-            pos_source = from_sph_coord_to_xyz(source_params,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # it is centered in the centre of the system
-        elif(type_source == 'PUNT'): 
-            face = 0
-            pos_source = source_params
-        
-        
-        if(En_type == 'UNIF') :
-            E = random_rescale(Energy[1], Energy[0])
-            cs, l, p = get_cs(E,cs_table, n)
-        elif(En_type == 'MONO'):
-            E = Energy
-            cs, l, p = get_cs(Energy, cs_table, n)
 
-        
-        # print('MONO --', end2 - start2)
-
-
-        start = time.time()
         j = 0
         p_type = 0.
         x0 = pos_source[0]
@@ -495,7 +504,6 @@ def event(i, cs_table, data, N_i, w, step_name, event_name):
         
         step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\tsource\t{E}\n') # source position for each event
 
-        DeltaE = 0
         theta_scat = 0
         while( (pos >= pos_min).all() & (pos <= pos_max).all()):
 
