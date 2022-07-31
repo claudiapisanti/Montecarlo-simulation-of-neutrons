@@ -205,10 +205,10 @@ def get_cs(E, cs_table, n):
 
 def find_nearest(array,value):
     """
-    This function find theindex of nearest value of a given one in an array.
+    This function find the index of nearest value of a given one in an array.
     The function finds the upper value. 
 
-    Parameters:
+    Parameters
     ----------
     array: array
         list of values from which the nearest value of 'value' must be found
@@ -233,6 +233,12 @@ def find_nearest(array,value):
 def face_func(face_prob_cum):
     """
     Randomly select a face of the rectangular extended source, given the cumulativefunction (face_prob_cum).
+
+    Parameters:
+    ----------
+    face_prob_cum: array
+        a 6 dimension array with the cumulative distribution probability that the source is fount in one of the faces of the scintillator.
+        It is calculated in file make_constants.py 
 
     Returns:
     -------
@@ -323,12 +329,17 @@ def scattering_angle(E, A):
     return theta_scat, E_new
 
 
+# -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
+
+
 def merge_tmp_tables(table_name : str, tmp_tables_list : list):
     """
     Function that merges together the temporary files created by the 
     different processes into a single final table
-    Inputs:
+    Parameters:
+    ----------
         table_name : filename of the final table
+
         tmp_tables_list : list of temporary tables filenames
     """
 
@@ -359,7 +370,61 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # single event
 def event_func(i, cs_table, data): # [cs_table, k]
-    """run events"""
+
+
+    """
+    Main function ...  to explain better
+
+    Parameters:
+    ----------
+    i: int
+        Number of the process (for multiprocessing)
+
+    cs_table:
+        cross section table.
+    
+    data: dictionary
+        Dictionary with all information required for the montecarlo.
+
+        {'n_processes': 
+            number of processes used for multiprocessing (int) 
+        'n':
+            molecular density calculated for the plastic scintillator (float)
+        'seed': 
+            random seed (int), line 1 of macro file
+        'N': 
+            number of events (int), line 2 of macro file
+        'En_type': 
+            energy type (UNIF or MONO) (str), line 3 of macro file
+        'Energy': 
+            Value of energy or energy ranges of the source energy (between 1 and 98.1 MeV)
+                - if the energy type is monoenergetic --> single value (float)
+                - if the energy type is uniform --> array with minimum and maximum energy array([float, float])
+        'pos_min': 
+            Mimimum position of the source ([0,0,0]) (array)
+        'pos_max': 
+            Scintillator dimension, line 5 of macro file
+        'type_source': 
+            Source geometry (PUNT, EST or SPH) (str)
+        'source_params': 
+            Give some addictional specific to source geometry.
+
+                - if type_source is pointlike --> source position (3 elements array)
+                - if type_Source is extended --> probability cumulative distribution of the elements (6 elements array)
+                - if type_source is spherical --> the rsdius of the spheres (float)
+        }
+
+        
+
+    Returns:
+    -------
+    None
+
+    The function produces two files: example.txt and step.txt that get track of the information of respectively each event and step information (position, energy, etc).
+    See README.md file for further informations.    
+
+
+    """
 
     # my data
     N = data['N'] # number of events
