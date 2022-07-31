@@ -4,10 +4,13 @@ Utils for montecarlo program.
 
 # FUNCTIONS
 import numpy as np
+import pandas as pd
 from random import random
 import constants as c
 import shutil
 import sys
+import csv
+
 
 import time
 
@@ -466,124 +469,163 @@ def event_func(i, cs_table, data): # [cs_table, k]
     N_i = int(N / n_processes)
 
     # create temporary file
+    
+
+    step_list = [] # ['event','step','x','y','z','interaction','Energy']
+    event_list = [] # (columns = ['event','last_step','x','y','z'])
+
+    for w in tqdm(range(N_i)): # run a certain number of events
+        step_list, event_list = event(i, cs_table, data, N_i, w,step_list, event_list)
+
+
     step_name = "tmp_step%d.txt" % (i)
     event_name = "tmp_event%d.txt" % (i)
 
-    for w in tqdm(range(N_i)): # run a certain number of events
-        event(i, cs_table, data, N_i, w,step_name, event_name)
+
+    with open(step_name,'w') as s:
+        writer = csv.writer(s)
+        writer.writerows(step_list)
+
+    with open(event_name, 'w') as e:
+        writer = csv.writer(e)
+        writer.writerows(event_list)
 
 
 
 
-def event(i, cs_table, data, N_i, w, step_name, event_name):
+
+
+def event(i, cs_table, data, N_i, w, step_list, event_list):
     """
     Single event ...
     """
     e = w + (i * N_i) + 1 # number of the event
 
-    with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
+    #with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
 
-        MeV = 1000000 # 1 MeV
+    MeV = 1000000 # 1 MeV
 
-        n = data['n'] # molecular density
-        En_type = data['En_type'] # energy type (PUNT or EST)
-        Energy = data['Energy'] # source energy
-        pos_min = data['pos_min'] # position of the scintillator
-        pos_max = data['pos_max'] # scintillator dimension
-        type_source = data['type_source'] # source geometrical distribution
-        source_params = data['source_params'] # other params for the geometrical characterizzation of the source
+    n = data['n'] # molecular density
+    En_type = data['En_type'] # energy type (PUNT or EST)
+    Energy = data['Energy'] # source energy
+    pos_min = data['pos_min'] # position of the scintillator
+    pos_max = data['pos_max'] # scintillator dimension
+    type_source = data['type_source'] # source geometrical distribution
+    source_params = data['source_params'] # other params for the geometrical characterizzation of the source
 
-        # get initial params
-        pos_source = get_source_position(type_source, source_params, pos_max, pos_min)
-        E, l, p = get_initial_energy(En_type, Energy, cs_table, n)
+    # get initial params
+    pos_source = get_source_position(type_source, source_params, pos_max, pos_min)
+    E, l, p = get_initial_energy(En_type, Energy, cs_table, n)
+    
+
+    j = 0
+    p_type = 0.
+    x0 = pos_source[0]
+    y0 = pos_source[1]
+    z0 = pos_source[2]
+    pos = np.array([0.,0.,0.]) # initialize
+    
+    #step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\tsource\t{E}\n') # source position for each event
+    # step_table.loc[len(step_table)] = [e,j,x0,y0,z0,'source',E]
+    step_list.append([e,j,x0,y0,z0,'source',E])
+    theta_scat = 0
+    while( (pos >= pos_min).all() & (pos <= pos_max).all()):
+
+        # it is easier to work in spherical coordinates
+
+        # initial direction
+        if j == 0:
+            phi = random_rescale(2*np.pi) # phi is inside [0 ,2*pi ]
+            theta = random_rescale(np.pi)   # thetha is inside [] 0 e pi]
+        else: 
+            rand = random_rescale(1, -1)
+            phi = phi + r * np.sin(theta_scat)* np.cos(r)  
+            theta = theta + r * np.sin(theta_scat) * np.sin(r) 
         
 
-        j = 0
-        p_type = 0.
-        x0 = pos_source[0]
-        y0 = pos_source[1]
-        z0 = pos_source[2]
-        pos = np.array([0.,0.,0.]) # initialize
+        p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
+        r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
         
-        step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\tsource\t{E}\n') # source position for each event
-
-        theta_scat = 0
-        while( (pos >= pos_min).all() & (pos <= pos_max).all()):
-
-            # it is easier to work in spherical coordinates
-
-            # initial direction
-            if j == 0:
-                phi = random_rescale(2*np.pi) # phi is inside [0 ,2*pi ]
-                theta = random_rescale(np.pi)   # thetha is inside [] 0 e pi]
-            else: 
-                rand = random_rescale(1, -1)
-                phi = phi + r * np.sin(theta_scat)* np.cos(r)  
-                theta = theta + r * np.sin(theta_scat) * np.sin(r) 
+        # translate sphericla coordinates into cartesian coordinates
+        pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
+        
+        # check if the particle is inside the scintillatro
+        if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
+                    
+            # check if neutron interact with carbon or proton
+            p_atom = random()
+            if (p_atom <= p[0]): # interact with carbon
+                # elastic or inelastic interaction?
+                p_type = random() 
             
+                if(p_type <= p[4] ): # if elastic scattering with carbon
+                    A = 12
+                    
+                    # calculate energy loss and so theta scattering of the neutron
+                    theta_scat, E = scattering_angle(E, A)
+                    if E < MeV: break # energy threshold (for the energy resolution of my detector)
 
-            p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
-            r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
-            
-            # translate sphericla coordinates into cartesian coordinates
-            pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
-            
-            # check if the particle is inside the scintillatro
-            if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
-                        
-                # check if neutron interact with carbon or proton
-                p_atom = random()
-                if (p_atom <= p[0]): # interact with carbon
-                    # elastic or inelastic interaction?
-                    p_type = random() 
+                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
+                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'elastic',E]
+                    step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+                    j = j+1 # next step
+                    
+
                 
-                    if(p_type <= p[4] ): # if elastic scattering with carbon
-                        A = 12
-                        
-                        # calculate energy loss and so theta scattering of the neutron
-                        theta_scat, E = scattering_angle(E, A)
-                        if E < MeV: break # energy threshold (for the energy resolution of my detector)
+                else: # if inelastic scattering with carbon
+                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\tinelastic\t{E}\n')
+                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'inelastic',E]
+                    step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
 
-                        step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
-                        
-                        j = j+1 # next step
-                        
+                    #event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\n')
+                    # event_table.loc[len(event_table)] = [e,j,pos[0],pos[1],pos[2]]
+                    event_list.append([e,j,pos[0],pos[1],pos[2]])
+                    j = j+1 # step successivo
 
+                    break
+
+            else: # interact with proton
+                # check type of interaction (elastic) or inelastic
+                p_type = random() 
+            
+                if(p_type <= p[2] ): # if elastic scattering with proton
+                    A = 1
                     
-                    else: # if inelastic scattering with carbon
-                        step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\tinelastic\t{E}\n')
-                        event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\n')
-                        j = j+1 # step successivo
+                    # calculate energy loss and so theta scattering of the neutron
+                    theta_scat, E = scattering_angle(E, A)
+                    if E < MeV: break # energy thershold (for the energy resolution of my detector)
 
-                        break
+                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
+                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'elastic',E]
+                    step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
 
-                else: # interact with proton
-                    # check type of interaction (elastic) or inelastic
-                    p_type = random() 
+
+                    j = j+1 # next step
+
                 
-                    if(p_type <= p[2] ): # if elastic scattering with proton
-                        A = 1
-                        
-                        # calculate energy loss and so theta scattering of the neutron
-                        theta_scat, E = scattering_angle(E, A)
-                        if E < MeV: break # energy thershold (for the energy resolution of my detector)
+                else: # if inelastic scattering with proton
+                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\tinelastic\t{E}\n')
+                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'inelastic',E]
+                    step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
 
-                        step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
-                        j = j+1 # next step
+                    #event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\n')
+                    # event_table.loc[len(event_table)] = [e,j,pos[0],pos[1],pos[2]]
+                    event_list.append([e,j,pos[0],pos[1],pos[2]])
 
-                    
-                    else: # if inelastic scattering with proton
-                        step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\tinelastic\t{E}\n')
-                        event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\n')
-                        
-                        break # I'm interested only in multiple scattering
-                    
-                    
+                    break # I'm interested onlys in multiple scattering
+                
+                
 
-            else: # if particle exit the scintillator
-                if ((pos!=pos_source).all()):
-                    event.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\n')
-        
-            x0,y0,z0 = pos
+        else: # if particle exit the scintillator
+            if ((pos!=pos_source).all()):
+                #event.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\n')
+                # event_table.loc[len(event_table)] = [e,j,x0,y0,z0]
+                event_list.append([e,j,x0,y0,z0])
 
+    
+        x0,y0,z0 = pos
 
+    # print(event_table)
+    #print([e,j,x0,y0,z0])
+
+    return step_list, event_list

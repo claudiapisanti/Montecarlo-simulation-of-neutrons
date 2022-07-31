@@ -38,7 +38,7 @@ elif len(sys.argv)==2:
 
 macro = open(macro_path, 'r')
 data = mkc.make_dictionary(macro)
-print(data)
+# print(data)
 
 myseed = data['seed'] # get seed from dictionary
 n_processes = data['n_processes'] # get number of processes from dictionary
@@ -54,10 +54,10 @@ cs_table = pd.read_csv('./cross_sections/cs.txt', sep = '\t')
 # MONTECARLO
 
 
-# # WITHOUT MULTIPROCESSING
+# # # WITHOUT MULTIPROCESSING
 # start = time.time()
-# for i in range (0,c.n_processes): # eventi
-#     func.event_func(i, cs_table)
+# for i in range (0,n_processes): # eventi
+#     func.event_func(i, cs_table, data)
 
 # end = time.time()
 
@@ -95,8 +95,8 @@ if __name__ == "__main__":
     step = open(step_name, 'w')
     event = open(event_name, 'w')
     # write column names (only the first time)
-    step.write('event\tstep\tx\ty\tz\tface\tinteraction\tEnergy\n')
-    event.write('event\tlast_step\tx\ty\tz\tface\n')
+    step.write('event,step,x,y,z,face,interaction,Energy\n')
+    event.write('event,last_step,x,y,z,face\n')
     step.close()
     event.close()
 
