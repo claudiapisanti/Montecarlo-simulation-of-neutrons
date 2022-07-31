@@ -76,35 +76,38 @@ def test_source_position_est_1():
     Tests:
         - if, given an input face, the function place the source in the correct face of the square
     """
+    pos_max = np.array([1,1,1])
+    pos_min = np.array([0,0,0])
+
     # check for face 1
     face = 1
-    pos = source_position_est(face)
-    assert pos[2] == c.pos_max[2]
+    pos = source_position_est(face, pos_max, pos_min)
+    assert pos[2] == pos_max[2]
 
     # check for face 2
     face = 2
-    pos = source_position_est(face)
-    assert pos[0] == c.pos_max[0]
+    pos = source_position_est(face, pos_max, pos_min)
+    assert pos[0] == pos_max[0]
 
     # check for face 3 
     face = 3
-    pos = source_position_est(face)
-    assert pos[1] == c.pos_min[1]
+    pos = source_position_est(face, pos_max, pos_min)
+    assert pos[1] == pos_min[1]
 
     # check for face 4
     face = 4
-    pos = source_position_est(face)
-    assert pos[0] == c.pos_min[0]
+    pos = source_position_est(face, pos_max, pos_min)
+    assert pos[0] == pos_min[0]
 
     # check for face 5
     face = 5
-    pos = source_position_est(face)
-    assert pos[1] == c.pos_max[1]
+    pos = source_position_est(face, pos_max, pos_min)
+    assert pos[1] == pos_max[1]
 
     # check for face 6
     face = 6
-    pos = source_position_est(face)
-    assert pos[2] == c.pos_min[2]
+    pos = source_position_est(face, pos_max, pos_min)
+    assert pos[2] == pos_min[2]
 
 
 
@@ -162,10 +165,10 @@ def test_get_cs_1():
     Tests:
         - if, given a proper csv, the cross section in output is as expected
     """
-    
+    n =  5.220889949745763e+21
     # import my sample dataframe
     cs_table, E = my_dataframe_and_energy()
-    test_cs, test_l, test_p = get_cs(E, cs_table)
+    test_cs, test_l, test_p = get_cs(E, cs_table, n)
     
     # round data to the first devimal number
     test_cs = np.dot(test_cs,10**23) # re-convert data into integer (from e-23 to unit) ro to easily round my data
@@ -180,9 +183,10 @@ def test_get_cs_2():
     Tests:
         - if, the output of the free mean path (l) is read correctly
     """
-    
+    n =  5.220889949745763e+21
+
     cs_table, E = my_dataframe_and_energy()
-    test_cs,test_l,test_p = get_cs(E, cs_table)
+    test_cs,test_l,test_p = get_cs(E, cs_table, n)
 
 
     test_l = round_data(test_l, 2)
@@ -196,9 +200,10 @@ def test_get_cs_3():
     Tests:
         - if, the output of the probability (p) is read correctly
     """
+    n =  5.220889949745763e+21
 
     cs_table, E = my_dataframe_and_energy()
-    test_cs,test_l,test_p = get_cs(E, cs_table)
+    test_cs,test_l,test_p = get_cs(E, cs_table, n)
 
     test_p = round_data(test_p, 2)
 
