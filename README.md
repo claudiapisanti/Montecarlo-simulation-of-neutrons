@@ -17,14 +17,14 @@ The simulation follow the path of the neutron and, for each step, untill it exit
 The information regarding the the neutron path 
 The program writes the informations regarding the single steps and the full event in two different files: 
  
-- **step.txt**: in which there are informations regarding the position of the interaction, the energy of the neutron and the type of interaction. The column called *face* takes in consideration the face in which the particle has been generated in the EST mode (see *physical characteristics* paragraph) and shows the position in which the particles are produced.
+- **step.txt**: in which there are informations regarding the position of the interaction, the energy of the neutron and the type of interaction. 
 
-	*event, step, position (x,y,z), face, type of interaction and energy of the neutron after the interaction*
+	*event, step, position (x,y,z),type of interaction and energy of the neutron after the interaction*
 
  
 - **event.txt**: in which information about the final event are saved. The file keep sign of 
 
-	*event number, total number of steps for the single event, final position of the neutron and face* 
+	*event number, total number of steps for the single event, final position of the neutron* 
 
 
 
