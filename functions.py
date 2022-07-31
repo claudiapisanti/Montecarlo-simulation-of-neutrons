@@ -37,7 +37,7 @@ def random_rescale(val_max, val_min = 0):
     val = random() * (val_max - val_min) + val_min
     return val
 
-def source_position_est(face):
+def source_position_est(face, pos_max, pos_min):
     """
     Define the position of the source in a rectangular surface. 
     
@@ -45,6 +45,12 @@ def source_position_est(face):
     ----------
     face: int
         The face of the rectangle where the source must be placed
+    
+    pos_max: array
+        Dimension of the plastic scintillator
+
+    pos_min: array
+        (0,0,0) array, minimum coordinates of ths scintillator
 
     Returns:
     -------
@@ -82,25 +88,25 @@ def source_position_est(face):
            O         x
     """
 
-    x_source = random_rescale(c.pos_max[0])
-    y_source = random_rescale(c.pos_max[1])
-    z_source = random_rescale(c.pos_max[2])
+    x_source = random_rescale(pos_max[0])
+    y_source = random_rescale(pos_max[1])
+    z_source = random_rescale(pos_max[2])
     
     # initialize position
     pos = [0,0,0]
     
-    if (face == 1): pos = np.array([x_source, y_source, c.pos_max[2]])
-    if (face == 2): pos = np.array([c.pos_max[0], y_source, z_source])
-    if (face == 3): pos = np.array([x_source, c.pos_min[1], z_source])
-    if (face == 4): pos = np.array([c.pos_min[0], y_source, z_source])
-    if (face == 5): pos = np.array([x_source, c.pos_max[1], z_source])
-    if (face == 6): pos = np.array([x_source, y_source, c.pos_min[2]])
+    if (face == 1): pos = np.array([x_source, y_source, pos_max[2]])
+    if (face == 2): pos = np.array([pos_max[0], y_source, z_source])
+    if (face == 3): pos = np.array([x_source, pos_min[1], z_source])
+    if (face == 4): pos = np.array([pos_min[0], y_source, z_source])
+    if (face == 5): pos = np.array([x_source, pos_max[1], z_source])
+    if (face == 6): pos = np.array([x_source, y_source, pos_min[2]])
 
     return pos
 
 
 
-def get_cs(E, cs_table):   
+def get_cs(E, cs_table, n):   
     """
     Get cross section given Energy.
 
@@ -118,6 +124,9 @@ def get_cs(E, cs_table):
         
         Energy must be  in eV
         cross sections must be in barn (b)
+
+    n: float
+        Molecular density of the material 
 
 
 
@@ -172,7 +181,7 @@ def get_cs(E, cs_table):
           cs_h_tot, cs_h_el, cs_h_inel, 
           cs_c_tot, cs_c_el, cs_c_inel] # cs[0] = total, cs[1] = elastic, cs[2] = inelastic
     cs = np.dot(cs, 10e-24) # convert cs from barn to cm^2
-    l = np.dot(cs, c.n) # lambda
+    l = np.dot(cs, n) # lambda
 
     p_carbon = 9 * cs[6] / cs[0]
     p_proton = 10 * cs[3] / cs[0]
@@ -221,9 +230,9 @@ def find_nearest(array,value):
     return idx 
    
 
-def face_func():
+def face_func(face_prob_cum):
     """
-    Randomly select a face of the rectangular extended source, given the cumulativefunction (c.face_prob_cum).
+    Randomly select a face of the rectangular extended source, given the cumulativefunction (face_prob_cum).
 
     Returns:
     -------
@@ -233,7 +242,7 @@ def face_func():
     """
 
     r = random()
-    index = find_nearest(c.face_prob_cum, r)
+    index = find_nearest(face_prob_cum, r)
     return int(index +1)
 
 
@@ -349,9 +358,25 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # single event
-def event_func(i, cs_table): # [cs_table, k]
+def event_func(i, cs_table, data): # [cs_table, k]
     """run events"""
-    N_i = int(c.N / c.n_processes)
+
+    # my data
+    N = data['N'] # number of events
+    n_processes = data['n_processes'] # number of processes
+
+    MeV = 1000000 # 1 MeV
+
+    n = data['n'] # molecular density
+    En_type = data['En_type'] # energy type (PUNT or EST)
+    Energy = data['Energy'] # source energy
+    pos_min = data['pos_min'] # position of the scintillator
+    pos_max = data['pos_max'] # scintillator dimension
+    type_source = data['type_source'] # source geometrical distribution
+    source_params = data['source_params'] # other params for the geometrical characterizzation of the source
+
+
+    N_i = int(N / n_processes)
 
     for w in tqdm(range(N_i)): # run a certain number of events
         e = w + (i * N_i) +1 # number of the event
@@ -366,27 +391,27 @@ def event_func(i, cs_table): # [cs_table, k]
         with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
 
             
-            if(c.type_source == 'EST'): # get initial position
-                face = face_func()
-                pos_source = source_position_est(face)
-            elif(c.type_source == 'SPH'): # get initial position
+            if(type_source == 'EST'): # get initial position
+                face = face_func(source_params)
+                pos_source = source_position_est(face, pos_max, pos_min)
+            elif(type_source == 'SPH'): # get initial position
                 face = 0
                 phi_source = random_rescale(np.pi)
                 theta_source = random_rescale(2*np.pi)
-                pos_source = from_sph_coord_to_xyz(c.sph_radius,phi_source,theta_source,c.pos_max[0]/2.,c.pos_max[1]/2.,c.pos_max[2]/2.) # it is centered in the centre of the system
-            elif(c.type_source == 'PUNT'): 
+                pos_source = from_sph_coord_to_xyz(source_params,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # it is centered in the centre of the system
+            elif(type_source == 'PUNT'): 
                 face = 0
-                pos_source = c.pos_source
+                pos_source = source_params
             
-            start2 = time.time()
-            if(c.En_type == 'UNIF') :
-                E = random_rescale(c.E_max, c.E_min)
-                cs, l, p = get_cs(E,cs_table)
-            elif(c.En_type == 'MONO'):
-                E = c.E_mono
-                cs, l, p = get_cs(c.E_mono, cs_table)
+            
+            if(En_type == 'UNIF') :
+                E = random_rescale(Energy[1], Energy[0])
+                cs, l, p = get_cs(E,cs_table, n)
+            elif(En_type == 'MONO'):
+                E = Energy
+                cs, l, p = get_cs(Energy, cs_table, n)
 
-            end2 = time.time()
+            
             # print('MONO --', end2 - start2)
 
 
@@ -402,7 +427,7 @@ def event_func(i, cs_table): # [cs_table, k]
 
             DeltaE = 0
             theta_scat = 0
-            while( (pos >= c.pos_min).all() & (pos <= c.pos_max).all()):
+            while( (pos >= pos_min).all() & (pos <= pos_max).all()):
 
                 # it is easier to work in spherical coordinates
 
@@ -423,7 +448,7 @@ def event_func(i, cs_table): # [cs_table, k]
                 pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
                 
                 # check if the particle is inside the scintillatro
-                if(  (pos >= c.pos_min ).all()  & (pos <= c.pos_max).all() ):
+                if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
                             
                     # check if neutron interact with carbon or proton
                     p_atom = random()
@@ -436,7 +461,7 @@ def event_func(i, cs_table): # [cs_table, k]
                             
                             # calculate energy loss and so theta scattering of the neutron
                             theta_scat, E = scattering_angle(E, A)
-                            if E < c.MeV1: break # energy threshold (for the energy resolution of my detector)
+                            if E < MeV: break # energy threshold (for the energy resolution of my detector)
 
                             step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\t{E}\n')
                             
@@ -460,7 +485,7 @@ def event_func(i, cs_table): # [cs_table, k]
                             
                             # calculate energy loss and so theta scattering of the neutron
                             theta_scat, E = scattering_angle(E, A)
-                            if E < c.MeV1: break # energy thershold (for the energy resolution of my detector)
+                            if E < MeV: break # energy thershold (for the energy resolution of my detector)
 
                             step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\t{face}\telastic\t{E}\n')
                             j = j+1 # next step
@@ -479,6 +504,3 @@ def event_func(i, cs_table): # [cs_table, k]
                         event.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\t{face}\n')
             
                 x0,y0,z0 = pos
-
-
-

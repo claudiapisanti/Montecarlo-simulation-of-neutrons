@@ -2,36 +2,49 @@
 from random import random, seed
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import multiprocessing as mp
 import time
 import os
 import glob
 import sys
+import argparse
+
+# my function
+import functions as func
+import make_constants as mkc
+
 
 # check argparse
 if len(sys.argv) < 2:
     print ("Using macro file 'example.txt'")
-    macro = 'example.txt'
+    macro_path = 'example.txt'
 elif len(sys.argv)==2:
-    macro = sys.argv[1]
+    macro_path = sys.argv[1]
     print(f"Using file '{sys.argv[1]}'")
 
 # generate from input macro file a file of constants. This will reduce 
+# macro = argparse.ArgumentParser( description = 'Macro file' ) # read file
+# print(macro)
 
-#macro = argparse.ArgumentParser( description = 'Macro file' ) # read file
-#print(macro)
 
 
-command = "python3 make_constants.py "+ macro
-os.system( command )
 
-# my functions
-import constants as c # I want to first generate the file, and then use it
-import functions as func
+
+# command = "python3 make_constants.py "+ macro
+# os.system( command )
+
+# # my functions
+# import constants as c # I want to first generate the file, and then use it
+
+macro = open(macro_path, 'r')
+data = mkc.make_dictionary(macro)
+print(data)
+
+myseed = data['seed'] # get seed from dictionary
+n_processes = data['n_processes'] # get number of processes from dictionary
 
 # fix seed for random
-seed(1)
+seed(myseed) 
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # read info from file and get number of particles form bash
@@ -59,17 +72,17 @@ if __name__ == "__main__":
     start = time.time()
 
     # Start processes in asyncronous way
-    with mp.Pool(processes=c.n_processes) as pool:
+    with mp.Pool(processes=n_processes) as pool:
 
-        for i in range(c.n_processes):
-            pool.apply_async(func.event_func, args = (i, cs_table))
+        for i in range(n_processes):
+            pool.apply_async(func.event_func, args = (i, cs_table, data))
         
         pool.close()
         pool.join()
         
 
     end = time.time()
-    print("Simulation finished in = ", round(end - start, 3), f"seconds with {c.n_processes} processes")
+    print("Simulation finished in = ", round(end - start, 3), f"seconds with {n_processes} processes")
 
 
     # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
