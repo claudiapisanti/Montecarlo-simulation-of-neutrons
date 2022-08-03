@@ -340,7 +340,7 @@ def scattering_angle(E, A, rand):
         (eg. A = 12 for carbon, A = 1 for proton)
 
     rand: float
-        random number between 0 and 1
+        random number between 0 and 1.
 
 
     Returns:
@@ -365,8 +365,44 @@ def scattering_angle(E, A, rand):
 def get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3,r4):
     """
     get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3,r4)
+    
+    Get source position given configuration informations (the input parameters of the source)
 
-    Get source position ...
+    Parameters:
+    ----------
+    type_source: string
+        Source geometry (PUNT, EST or SPH).    
+
+    source_params: 
+        Give some addictional specific to source geometry.
+
+            - if type_source is pointlike --> source position (3 elements array)
+            - if type_Source is extended --> probability cumulative distribution of the elements (6 elements array)
+            - if type_source is spherical --> the rsdius of the spheres (float)
+
+    pos_max: array
+        Scintillator dimension, line 5 of macro file.
+    
+    pos_min: array
+        Mimimum position of the source ([0,0,0]) (array).
+    r1: float
+        random number between 0 and 1.
+
+    r2: float
+        random number between 0 and 1.
+
+    r3: float
+        random number between 0 and 1.
+
+    r4: float
+        random number between 0 and 1.
+
+
+    Returns:
+    -------
+    pos_source: array
+        position (x,y,z) of the source.
+
     """
     if(type_source == 'EST'): # get initial position
             
@@ -383,7 +419,46 @@ def get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3,r
 
 def get_initial_energy(En_type, Energy, cs_table, n, E_rand):
     """
-    Get initial energy ...
+    get_initial_energy(En_type, Energy, cs_table, n, E_rand)
+
+    Get initial energy given input information defined in the macro file (eg. UNIF, MONO, Energy)
+
+    Parameters:
+    ----------
+    En_type: string
+        MONO for monoenergetic or UNIF for uniform distribution
+    Energy:
+        Value of energy or energy ranges of the source energy (between 1 and 98.1 MeV)
+            - if the energy type is monoenergetic --> single value (float)
+            - if the energy type is uniform --> array with minimum and maximum energy array([float, float])
+
+    cs_table: 
+        cross section table.
+
+    n: float
+        molecular density calculated for the plastic scintillator.
+
+    E_rand: float
+        random number between 0 and 1.
+    
+    Returns:
+    -------
+    E: float
+        Energy of the neutron 
+    l: array
+        Mean free path. The order of the array is the same of cs. In cm^2.
+
+    p: array
+        Array probability of having proton vs carbon scattering, and, 
+        for the single element (proton and carbon), of having elastic vs inelastic scattering.
+
+        [ prob of having carbon scattering, 
+        prob of having proton scattering, 
+        probability of having hydrogen elastic scattering, 
+        probability of having hydrogen inelastic scattering,
+        probability of having carbon elastic scattering, 
+        probability of having carbon inelastic scattering ]
+
     """
     if(En_type == 'UNIF') :
         E = random_rescale(E_rand, Energy[1], Energy[0])
@@ -405,9 +480,11 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
     different processes into a single final table
     Parameters:
     ----------
-        table_name : filename of the final table
+        table_name : string
+            filename of the final table.
 
-        tmp_tables_list : list of temporary tables filenames
+        tmp_tables_list : list of string
+            list of temporary tables filenames. (eg. 'tmp_file_i.txt')
     """
 
     tmp_tables_list.sort()
@@ -435,12 +512,12 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
-# single event
+# all events
 def event_func(i, cs_table, data): # [cs_table, k]
     """
     event_func(i, cs_table, data)
 
-    Main function ...  to explain better
+    Main function. This unction group into itself N_i single events that ill be compiled in the single process.
 
     Parameters:
     ----------
@@ -471,7 +548,7 @@ def event_func(i, cs_table, data): # [cs_table, k]
             Mimimum position of the source ([0,0,0]) (array)
         'pos_max': 
             Scintillator dimension, line 5 of macro file
-        'type_source': 
+        'type_source': str
             Source geometry (PUNT, EST or SPH) (str)
         'source_params': 
             Give some addictional specific to source geometry.
@@ -525,13 +602,95 @@ def event_func(i, cs_table, data): # [cs_table, k]
 
 
 
-
-
-
 def event(i, cs_table, data, N_i, w, step_list, event_list):
     """
     event(i, cs_table, data, N_i, w, step_list, event_list)
-    Single event ...
+    Single event. Simulate the single neutron from its creation to its end. 
+    The information on the event (final position, number of interactions) 
+    and on the interactions (steps) the particle had on the scintillator 
+    will be saved as a list and returned as an output.
+
+    Parameters:
+    ----------
+    i: int
+        Number of the process (for multiprocessing)
+
+    cs_table:
+        cross section table.
+    
+    data: dictionary
+        Dictionary with all information required for the montecarlo.
+
+        {'n_processes': 
+            number of processes used for multiprocessing (int) 
+        'n':
+            molecular density calculated for the plastic scintillator (float)
+        'seed': 
+            random seed (int), line 1 of macro file
+        'N': 
+            number of events (int), line 2 of macro file
+        'En_type': 
+            energy type (UNIF or MONO) (str), line 3 of macro file
+        'Energy': 
+            Value of energy or energy ranges of the source energy (between 1 and 98.1 MeV)
+                - if the energy type is monoenergetic --> single value (float)
+                - if the energy type is uniform --> array with minimum and maximum energy array([float, float])
+        'pos_min': 
+            Mimimum position of the source ([0,0,0]) (array)
+        'pos_max': 
+            Scintillator dimension, line 5 of macro file
+        'type_source': str
+            Source geometry (PUNT, EST or SPH) (str)
+        'source_params': 
+            Give some addictional specific to source geometry.
+
+                - if type_source is pointlike --> source position (3 elements array)
+                - if type_Source is extended --> probability cumulative distribution of the elements (6 elements array)
+                - if type_source is spherical --> the rsdius of the spheres (float)
+        }
+
+    N_i: int
+        number of events of th esimulation (for event counting)
+    w: int
+        number of i_th event that has been simulated (for event counting)
+        event_number = w + (i * N_i) + 1 
+
+    step_list: list
+        history of all the stpes of the previous particles in the simulation.
+        In the list are written:
+            [event_number, step_number, x,y,z, type_of_interaction, Energy]
+        
+        where x,y,z is the position of the interaction.
+
+
+
+    event_list:
+        history of all the events of the previous particles in the simulation.
+        In the list are written:
+        
+            [event,last_step,x,y,z]
+
+        where x,y,z is the position where the particle stop (exit form the scintillator or reached energy lower than 1 MeV)
+
+
+    Returns:
+    -------
+    step_list: list
+        History of all the stpes of the previous particles in the simulation plus the steps of the current event.
+        In the list are written:
+            [event_number, step_number, x,y,z, type_of_interaction, Energy]
+        
+        where x,y,z is the position of the interaction.
+
+
+    event_list:
+        history of all the events of the previous particles in the simulation plus the current event.
+        In the list are written:
+        
+            [event,last_step,x,y,z]
+
+        where x,y,z is the position where the particle stop (exit form the scintillator or reached energy lower than 1 MeV)
+
     """
     e = w + (i * N_i) + 1 # number of the event
 
@@ -667,8 +826,5 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
 
     
         x0,y0,z0 = pos
-
-    # print(event_table)
-    #print([e,j,x0,y0,z0])
 
     return step_list, event_list

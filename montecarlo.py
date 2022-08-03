@@ -95,8 +95,8 @@ if __name__ == "__main__":
     step = open(step_name, 'w')
     event = open(event_name, 'w')
     # write column names (only the first time)
-    step.write('event,step,x,y,z,face,interaction,Energy\n')
-    event.write('event,last_step,x,y,z,face\n')
+    step.write('event,step,x,y,z,interaction,Energy\n')
+    event.write('event,last_step,x,y,z\n')
     step.close()
     event.close()
 
