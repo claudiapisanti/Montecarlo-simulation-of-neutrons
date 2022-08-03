@@ -17,19 +17,23 @@ import time
 from tqdm import tqdm
 
 
-def random_rescale(val_max, val_min = 0):
+def random_rescale(rand, val_max, val_min = 0):
     """
-    random_rescale(val_max, val_min = 0)
+    random_rescale(rand, val_max, val_min = 0)
     
     Return a random number between the interval of interest (val_min, val_max).
 
     Parameters:
     -----------
+    rand: float
+        Value between 0 and 1
+
     val_max : float or int
         Upper boundary of the interval
 
     val_min: float or int, optional
         Lower boundary of the interval. Default is 0.
+    
 
     Returns:
     -------
@@ -37,15 +41,27 @@ def random_rescale(val_max, val_min = 0):
         Random number between interval boundaries
 
     """
-    val = random() * (val_max - val_min) + val_min
+    val = rand * (val_max - val_min) + val_min
     return val
 
-def source_position_est(face, pos_max, pos_min):
+def source_position_est(r1,r2,r3, face, pos_max, pos_min):
     """
+    source_position_est(r1,r2,r3, face, pos_max, pos_min)
+
     Define the position of the source in a rectangular surface. 
     
     Parameters:
     ----------
+    r1: float 
+        random number between 0 and 1
+
+    r2: float 
+        random number between 0 and 1
+
+    r3: float 
+        random number between 0 and 1
+
+
     face: int
         The face of the rectangle where the source must be placed
     
@@ -91,9 +107,10 @@ def source_position_est(face, pos_max, pos_min):
            O         x
     """
 
-    x_source = random_rescale(pos_max[0])
-    y_source = random_rescale(pos_max[1])
-    z_source = random_rescale(pos_max[2])
+    
+    x_source = random_rescale(r1, pos_max[0])
+    y_source = random_rescale(r2, pos_max[1])
+    z_source = random_rescale(r3, pos_max[2])
     
     # initialize position
     pos = [0,0,0]
@@ -111,6 +128,8 @@ def source_position_est(face, pos_max, pos_min):
 
 def get_cs(E, cs_table, n):   
     """
+    get_cs(E, cs_table, n)
+
     Get cross section given Energy.
 
 
@@ -208,6 +227,8 @@ def get_cs(E, cs_table, n):
 
 def find_nearest(array,value):
     """
+    find_nearest(array,value)
+
     This function find the index of nearest value of a given one in an array.
     The function finds the upper value. 
 
@@ -233,12 +254,17 @@ def find_nearest(array,value):
     return idx 
    
 
-def face_func(face_prob_cum):
+def face_func(r, face_prob_cum):
     """
+    face_func(r, face_prob_cum)
+
     Randomly select a face of the rectangular extended source, given the cumulativefunction (face_prob_cum).
 
     Parameters:
     ----------
+    r: float
+        random number between 0 and 1
+
     face_prob_cum: array
         a 6 dimension array with the cumulative distribution probability that the source is fount in one of the faces of the scintillator.
         It is calculated in file make_constants.py 
@@ -250,7 +276,6 @@ def face_func(face_prob_cum):
 
     """
 
-    r = random()
     index = find_nearest(face_prob_cum, r)
     return int(index +1)
 
@@ -258,23 +283,25 @@ def face_func(face_prob_cum):
 
 def from_sph_coord_to_xyz(r,phi,theta,x0= 0.,y0=0.,z0=0.):
     """
+    from_sph_coord_to_xyz(r,phi,theta,x0= 0.,y0=0.,z0=0.)
+
     Conversion form spherical coordinates to cartesian coordinates
 
     Parameters:
     ----------
-        r: float or int
-            from 0 to infinity [0, inf ]
-        phi: float or int
-            in radiant, boundaries: [0, pi]
+    r: float or int
+        from 0 to infinity [0, inf ]
+    phi: float or int
+        in radiant, boundaries: [0, pi]
 
-        theta: float or int
-            in radiant, boundaries: [0, 2*pi]
-        x0: float o int
-            initial coordinates x. Deaflut = 0.
-        y0: float or int
-            initial coordinates y. Deaflut = 0.
-        z0: float or int
-            initial coordinates z. Deaflut = 0.
+    theta: float or int
+        in radiant, boundaries: [0, 2*pi]
+    x0: float o int
+        initial coordinates x. Deaflut = 0.
+    y0: float or int
+        initial coordinates y. Deaflut = 0.
+    z0: float or int
+        initial coordinates z. Deaflut = 0.
 
     Returns:
     -------
@@ -292,8 +319,9 @@ def from_sph_coord_to_xyz(r,phi,theta,x0= 0.,y0=0.,z0=0.):
     pos = np.array([x1,y1,z1])
     return pos
 
-def scattering_angle(E, A):
+def scattering_angle(E, A, rand):
     """
+    scattering_angle(E, A, rand)
     scattering for a given energy. 
     For the maximum loss of energy with respect to the different atom (H or C), 
     ((A - 1)/(A+1))**2*E has been used. (For neutrons)
@@ -310,7 +338,10 @@ def scattering_angle(E, A):
     A: int
         atomic number of the nucleus in which neutron is inpinging. 
         (eg. A = 12 for carbon, A = 1 for proton)
-        
+
+    rand: float
+        random number between 0 and 1
+
 
     Returns:
     -------
@@ -323,8 +354,7 @@ def scattering_angle(E, A):
 
 
     """
-
-    E_new = random_rescale(E, ((A - 1)/(A+1))**2*E) # formula on LEO -- the energy of the scattered neutron is limited in the range between DeltaE and E0                 
+    E_new = random_rescale(rand, E, ((A - 1)/(A+1))**2*E) # formula on LEO -- the energy of the scattered neutron is limited in the range between DeltaE and E0                 
     cos_theta_CM = ((E_new) / E * (A+1)**2 - A**2 - 1)/(2*A) # see LEO
     theta_scat = np.arccos((A * cos_theta_CM + 1)/ np.sqrt(A**2 + 1 + 2*A*cos_theta_CM)) # see LEO
 
@@ -332,28 +362,31 @@ def scattering_angle(E, A):
     return theta_scat, E_new
 
 
-def get_source_position(type_source, source_params, pos_max, pos_min):
+def get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3,r4):
     """
+    get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3,r4)
+
     Get source position ...
     """
     if(type_source == 'EST'): # get initial position
-            face = face_func(source_params)
-            pos_source = source_position_est(face, pos_max, pos_min)
+            
+            face = face_func(r4, source_params)
+            pos_source = source_position_est(r1,r2,r3, face, pos_max, pos_min)
     elif(type_source == 'SPH'): # get initial position
-            phi_source = random_rescale(np.pi)
-            theta_source = random_rescale(2*np.pi)
+            phi_source = random_rescale(r1, np.pi)
+            theta_source = random_rescale(r2, 2*np.pi)
             pos_source = from_sph_coord_to_xyz(source_params,phi_source,theta_source,pos_max[0]/2.,pos_max[1]/2.,pos_max[2]/2.) # it is centered in the centre of the system
     elif(type_source == 'PUNT'): 
             pos_source = source_params
 
     return pos_source
 
-def get_initial_energy(En_type, Energy, cs_table, n):
+def get_initial_energy(En_type, Energy, cs_table, n, E_rand):
     """
     Get initial energy ...
     """
     if(En_type == 'UNIF') :
-        E = random_rescale(Energy[1], Energy[0])
+        E = random_rescale(E_rand, Energy[1], Energy[0])
         cs, l, p = get_cs(E,cs_table, n)
     elif(En_type == 'MONO'):
         E = Energy
@@ -404,9 +437,9 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # single event
 def event_func(i, cs_table, data): # [cs_table, k]
-
-
     """
+    event_func(i, cs_table, data)
+
     Main function ...  to explain better
 
     Parameters:
@@ -497,6 +530,7 @@ def event_func(i, cs_table, data): # [cs_table, k]
 
 def event(i, cs_table, data, N_i, w, step_list, event_list):
     """
+    event(i, cs_table, data, N_i, w, step_list, event_list)
     Single event ...
     """
     e = w + (i * N_i) + 1 # number of the event
@@ -514,8 +548,13 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     source_params = data['source_params'] # other params for the geometrical characterizzation of the source
 
     # get initial params
-    pos_source = get_source_position(type_source, source_params, pos_max, pos_min)
-    E, l, p = get_initial_energy(En_type, Energy, cs_table, n)
+    r1 = random()
+    r2 = random()
+    r3 = random()
+    r4 = random()
+    r5 = random()
+    pos_source = get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3, r4)
+    E, l, p = get_initial_energy(En_type, Energy, cs_table, n, r5)
     
 
     j = 0
@@ -535,10 +574,13 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
 
         # initial direction
         if j == 0:
-            phi = random_rescale(2*np.pi) # phi is inside [0 ,2*pi ]
-            theta = random_rescale(np.pi)   # thetha is inside [] 0 e pi]
+            rand = random()
+            phi = random_rescale(rand,2*np.pi) # phi is inside [0 ,2*pi ]
+            rand = random()
+            theta = random_rescale(rand, np.pi)   # thetha is inside [] 0 e pi]
         else: 
-            rand = random_rescale(1, -1)
+            r = random()
+            rand = random_rescale(r, 1, -1)
             phi = phi + r * np.sin(theta_scat)* np.cos(r)  
             theta = theta + r * np.sin(theta_scat) * np.sin(r) 
         
@@ -560,9 +602,9 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
             
                 if(p_type <= p[4] ): # if elastic scattering with carbon
                     A = 12
-                    
+                    rand = random()
                     # calculate energy loss and so theta scattering of the neutron
-                    theta_scat, E = scattering_angle(E, A)
+                    theta_scat, E = scattering_angle(E, A, rand)
                     if E < MeV: break # energy threshold (for the energy resolution of my detector)
 
                     #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
@@ -592,7 +634,8 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
                     A = 1
                     
                     # calculate energy loss and so theta scattering of the neutron
-                    theta_scat, E = scattering_angle(E, A)
+                    rand = random()
+                    theta_scat, E = scattering_angle(E, A, rand)
                     if E < MeV: break # energy thershold (for the energy resolution of my detector)
 
                     #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
