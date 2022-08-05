@@ -1,0 +1,7 @@
+42 # seed
+100 # number of particle generated
+MONO # energy distribution
+1 # energy in mev
+2 2 2 # scintillator dimensions
+SPH # source geometry
+1 # source radius (for sph)
