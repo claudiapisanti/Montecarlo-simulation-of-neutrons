@@ -485,6 +485,9 @@ def merge_tmp_tables(table_name : str, tmp_tables_list : list):
 
         tmp_tables_list : list of string
             list of temporary tables filenames. (eg. 'tmp_file_i.txt')
+    Returns:
+    -------
+
     """
 
     tmp_tables_list.sort()
@@ -694,8 +697,6 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     """
     e = w + (i * N_i) + 1 # number of the event
 
-    #with open(step_name, 'a+') as step, open(event_name, 'a+') as event:
-
     MeV = 1000000 # 1 MeV
 
     n = data['n'] # molecular density
@@ -723,34 +724,27 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     z0 = pos_source[2]
     pos = np.array([0.,0.,0.]) # initialize
     
-    #step.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\tsource\t{E}\n') # source position for each event
-    # step_table.loc[len(step_table)] = [e,j,x0,y0,z0,'source',E]
     step_list.append([e,j,x0,y0,z0,'source',E])
     theta_scat = 0
-    while( (pos >= pos_min).all() & (pos <= pos_max).all()):
+    r = 0.
+    while( (pos >= pos_min).all() & (pos <= pos_max).all()): # j_th step
 
         # it is easier to work in spherical coordinates
-
-        # initial direction
-        if j == 0:
-            rand = random()
-            phi = random_rescale(rand,2*np.pi) # phi is inside [0 ,2*pi ]
-            rand = random()
-            theta = random_rescale(rand, np.pi)   # thetha is inside [] 0 e pi]
-        else: 
-            r = random()
-            rand = random_rescale(r, 1, -1)
+        
+        if j == 0: # initial direction
+            phi = random_rescale(r1,2*np.pi) # phi is inside [0 ,2*pi ]
+            theta = random_rescale(r2, np.pi)   # thetha is inside [] 0 e pi]
+        else: # subsequent direction
             phi = phi + r * np.sin(theta_scat)* np.cos(r)  
             theta = theta + r * np.sin(theta_scat) * np.sin(r) 
-        
 
         p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
         r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
         
-        # translate sphericla coordinates into cartesian coordinates
+        # translate spherical coordinates into cartesian coordinates
         pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
         
-        # check if the particle is inside the scintillatro
+        # check if the particle is inside the scintillator
         if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
                     
             # check if neutron interact with carbon or proton
@@ -766,20 +760,13 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
                     theta_scat, E = scattering_angle(E, A, rand)
                     if E < MeV: break # energy threshold (for the energy resolution of my detector)
 
-                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
-                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'elastic',E]
                     step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
                     j = j+1 # next step
                     
 
                 
                 else: # if inelastic scattering with carbon
-                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\tinelastic\t{E}\n')
-                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'inelastic',E]
                     step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-
-                    #event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\n')
-                    # event_table.loc[len(event_table)] = [e,j,pos[0],pos[1],pos[2]]
                     event_list.append([e,j,pos[0],pos[1],pos[2]])
                     j = j+1 # step successivo
 
@@ -797,8 +784,6 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
                     theta_scat, E = scattering_angle(E, A, rand)
                     if E < MeV: break # energy thershold (for the energy resolution of my detector)
 
-                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\telastic\t{E}\n')
-                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'elastic',E]
                     step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
 
 
@@ -806,25 +791,21 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
 
                 
                 else: # if inelastic scattering with proton
-                    #step.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\tinelastic\t{E}\n')
-                    # step_table.loc[len(step_table)] = [e,j,pos[0],pos[1],pos[2],'inelastic',E]
                     step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-
-                    #event.write(f'{e}\t{j}\t{pos[0]}\t{pos[1]}\t{pos[2]}\n')
-                    # event_table.loc[len(event_table)] = [e,j,pos[0],pos[1],pos[2]]
                     event_list.append([e,j,pos[0],pos[1],pos[2]])
-
                     break # I'm interested onlys in multiple scattering
                 
                 
 
         else: # if particle exit the scintillator
             if ((pos!=pos_source).all()):
-                #event.write(f'{e}\t{j}\t{x0}\t{y0}\t{z0}\n')
-                # event_table.loc[len(event_table)] = [e,j,x0,y0,z0]
                 event_list.append([e,j,x0,y0,z0])
 
     
         x0,y0,z0 = pos
+
+    # if the particle dies in the source
+    if event_list == []:
+        event_list.append([e,j,x0,y0,z0])
 
     return step_list, event_list
