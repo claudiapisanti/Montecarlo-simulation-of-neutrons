@@ -1,0 +1,11 @@
+*.png
+!scintillator_faces_50.png
+
+*.txt
+!physical_characteristics.txt
+!cs.txt
+!requirements.txt
+!example.txt
+!dictionary_test.txt
+
+__pycache__
