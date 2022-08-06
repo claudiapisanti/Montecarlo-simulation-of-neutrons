@@ -1,5 +1,5 @@
 # IMPORT LIBRARIES
-from random import random, seed
+from random import seed
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -22,23 +22,9 @@ elif len(sys.argv)==2:
     macro_path = sys.argv[1]
     print(f"Using file '{sys.argv[1]}'")
 
-# generate from input macro file a file of constants. This will reduce 
-# macro = argparse.ArgumentParser( description = 'Macro file' ) # read file
-# print(macro)
-
-
-
-
-
-# command = "python3 make_constants.py "+ macro
-# os.system( command )
-
-# # my functions
-# import constants as c # I want to first generate the file, and then use it
 
 macro = open(macro_path, 'r')
 data = mkc.make_dictionary(macro)
-# print(data)
 
 myseed = data['seed'] # get seed from dictionary
 n_processes = data['n_processes'] # get number of processes from dictionary
@@ -100,10 +86,9 @@ if __name__ == "__main__":
     step.close()
     event.close()
 
-    # select all tempoirary files
+    # select all temporary files
     tmp_step_list = glob.glob("tmp_step*.txt")
     tmp_event_list = glob.glob("tmp_event*.txt")
-    # print(len(tmp_event_list)) # count number of file created
 
     # merge al temporary files in a single file
     func.merge_tmp_tables(step_name, tmp_step_list)

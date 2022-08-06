@@ -203,7 +203,7 @@ def get_cs(E, cs_table, n):
           cs_h_tot, cs_h_el, cs_h_inel, 
           cs_c_tot, cs_c_el, cs_c_inel] # cs[0] = total, cs[1] = elastic, cs[2] = inelastic
     cs = np.dot(cs, 10e-24) # convert cs from barn to cm^2
-    l = cs[0] * n #np.dot(cs, n) # lambda
+    l = cs[0] * n  # lambda
 
     p_carbon = 9 * cs[6] / cs[0]
     p_proton = 10 * cs[3] / cs[0]
@@ -413,7 +413,6 @@ def get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3,r
 
     """
     if(type_source == 'EST'): # get initial position
-            
             face = face_func(r4, source_params)
             pos_source = source_position_est(r1,r2,r3, face, pos_max, pos_min)
     elif(type_source == 'SPH'): # get initial position
@@ -764,7 +763,7 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
             step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
         
         elif(r < p[1]): # inelastic scattering with carbon
-            j = j+1 # step successivo
+            j = j+1 # next step
             step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
             break # I'm interested onlys in multiple scattering
 
@@ -779,12 +778,12 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
 
         else: # inelastic scattering with hydrogen
             step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-            break # I'm interested onlys in multiple scattering
+            break # I'm interested onlys in multiple elastic scattering
             
         position = pos
         x0,y0,z0 = pos
 
-    # if particle is outside the scintillator
+    # when particle is outside the scintillator
     event_list.append([e,j,pos[0],pos[1],pos[2]])
 
     return step_list, event_list
