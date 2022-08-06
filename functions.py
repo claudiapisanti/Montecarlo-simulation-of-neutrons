@@ -203,7 +203,7 @@ def get_cs(E, cs_table, n):
           cs_h_tot, cs_h_el, cs_h_inel, 
           cs_c_tot, cs_c_el, cs_c_inel] # cs[0] = total, cs[1] = elastic, cs[2] = inelastic
     cs = np.dot(cs, 10e-24) # convert cs from barn to cm^2
-    l = np.dot(cs, n) # lambda
+    l = cs[0] * n #np.dot(cs, n) # lambda
 
     p_carbon = 9 * cs[6] / cs[0]
     p_proton = 10 * cs[3] / cs[0]
@@ -216,11 +216,19 @@ def get_cs(E, cs_table, n):
     p_c_elastic = cs[7] / cs[6] # probability of having elastic scattering
     p_c_inelastic = cs[8] / cs[6] # probability of having inelastic scattering with respect to total probability of having scattering 
 
-    p = [p_carbon, p_proton,
-         p_h_elastic, p_h_inelastic,
-         p_c_elastic, p_c_inelastic]
+    p = [p_carbon*p_c_elastic, 
+         p_carbon*p_c_inelastic,
+         p_proton*p_h_elastic,
+         p_proton*p_h_inelastic]
 
-    return cs, l, p
+    # get cumulative
+    p_cumulative = np.zeros(len(p))
+
+    for i in range(len(p)):
+        p_cumulative[i] = sum(p[:(i+1)]) / sum(p)
+
+
+    return cs, l, p_cumulative
 
 
 
@@ -715,10 +723,8 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     r5 = random()
     pos_source = get_source_position(type_source, source_params, pos_max, pos_min, r1,r2,r3, r4)
     E, l, p = get_initial_energy(En_type, Energy, cs_table, n, r5)
-    
 
     j = 0
-    p_type = 0.
     x0 = pos_source[0]
     y0 = pos_source[1]
     z0 = pos_source[2]
@@ -727,81 +733,67 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     step_list.append([e,j,x0,y0,z0,'source',E])
     theta_scat = 0
     r = 0.
-    while( (pos >= pos_min).all() & (pos <= pos_max).all()): # j_th step
+    # j_th step
+    while( (pos >= pos_min).all() & (pos <= pos_max).all()):
+        # print(p)
 
         # it is easier to work in spherical coordinates
-        
         if j == 0: # initial direction
-            phi = random_rescale(r1,2*np.pi) # phi is inside [0 ,2*pi ]
+            phi = random_rescale(r1, 2*np.pi) # phi is inside [0 ,2*pi ]
             theta = random_rescale(r2, np.pi)   # thetha is inside [] 0 e pi]
         else: # subsequent direction
             phi = phi + r * np.sin(theta_scat)* np.cos(r)  
             theta = theta + r * np.sin(theta_scat) * np.sin(r) 
 
-        p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght claculated form the particle 
-        r = - l[0] * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
+        p_interaction = random() # probability of interaction (cs_total). It is necessary for the measure of the lenght calculated form the particle 
+        r = - l * np.log(1-p_interaction) # by using the BEER LAMBERT law, i can calucate how long the particle is travelling
         
         # translate spherical coordinates into cartesian coordinates
         pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
         
         # check if the particle is inside the scintillator
-        if(  (pos >= pos_min ).all()  & (pos <= pos_max).all() ):
-                    
+        if( (pos >= pos_min ).all() & (pos <= pos_max).all() ):
             # check if neutron interact with carbon or proton
-            p_atom = random()
-            if (p_atom <= p[0]): # interact with carbon
-                # elastic or inelastic interaction?
-                p_type = random() 
+            r = random()
+
+            if (r < p[0]): #elastic scattering with carbon
+                A = 12
+                rand = random()
+                # calculate energy loss and so theta scattering of the neutron
+                theta_scat, E = scattering_angle(E, A, rand)
+                if E < MeV: break # energy threshold (for the energy resolution of my detector)
+                j = j+1 # next step
+                step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
             
-                if(p_type <= p[4] ): # if elastic scattering with carbon
-                    A = 12
-                    rand = random()
-                    # calculate energy loss and so theta scattering of the neutron
-                    theta_scat, E = scattering_angle(E, A, rand)
-                    if E < MeV: break # energy threshold (for the energy resolution of my detector)
-
-                    step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
-                    j = j+1 # next step
-                    
-
-                
-                else: # if inelastic scattering with carbon
-                    step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-                    event_list.append([e,j,pos[0],pos[1],pos[2]])
-                    j = j+1 # step successivo
-
-                    break
-
-            else: # interact with proton
-                # check type of interaction (elastic) or inelastic
-                p_type = random() 
-            
-                if(p_type <= p[2] ): # if elastic scattering with proton
-                    A = 1
-                    
-                    # calculate energy loss and so theta scattering of the neutron
-                    rand = random()
-                    theta_scat, E = scattering_angle(E, A, rand)
-                    if E < MeV: break # energy thershold (for the energy resolution of my detector)
-
-                    step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+            elif(r < p[1]): # inelastic scattering with carbon
+                j = j+1 # step successivo
+                step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
+                event_list.append([e,j,pos[0],pos[1],pos[2]])
+                break # I'm interested onlys in multiple scattering
 
 
-                    j = j+1 # next step
 
-                
-                else: # if inelastic scattering with proton
-                    step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-                    event_list.append([e,j,pos[0],pos[1],pos[2]])
-                    break # I'm interested onlys in multiple scattering
+            elif(r < p[2]): # elastic scattering with hydrogen
+                A = 1  
+                # calculate energy loss and so theta scattering of the neutron
+                rand = random()
+                theta_scat, E = scattering_angle(E, A, rand)
+                if E < MeV: break # energy thershold (for the energy resolution of my detector)
+                j = j+1 # next step
+                step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+
+            else: # inelastic scattering with hydrogen
+                step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
+                event_list.append([e,j,pos[0],pos[1],pos[2]])
+                # j = j+1
+                break # I'm interested onlys in multiple scattering
                 
                 
+        # if particle is outside the scintillator
+        elif((pos!=pos_source).all()): # excluding source particles because the source could also be external to the scintillator
+            event_list.append([e,j,x0,y0,z0])
 
-        else: # if particle exit the scintillator
-            if ((pos!=pos_source).all()):
-                event_list.append([e,j,x0,y0,z0])
 
-    
         x0,y0,z0 = pos
 
     # if the particle dies in the source
