@@ -580,7 +580,6 @@ def event_func(i, cs_table, data): # [cs_table, k]
 
 
     """
-
     # my data
     N = data['N'] # number of events
     n_processes = data['n_processes'] # number of processes
@@ -728,14 +727,15 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     x0 = pos_source[0]
     y0 = pos_source[1]
     z0 = pos_source[2]
-    pos = np.array([0.,0.,0.]) # initialize
+    position = np.array([0.,0.,0.]) # initialize
     
     step_list.append([e,j,x0,y0,z0,'source',E])
     theta_scat = 0
     r = 0.
     # j_th step
-    while( (pos >= pos_min).all() & (pos <= pos_max).all()):
-        # print(p)
+    while( (position >= pos_min).all() & (position <= pos_max).all()):
+        
+        # 1) probability of interaction
 
         # it is easier to work in spherical coordinates
         if j == 0: # initial direction
@@ -750,54 +750,41 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
         
         # translate spherical coordinates into cartesian coordinates
         pos = from_sph_coord_to_xyz(r,phi,theta,x0,y0,z0) # position of interaction (x,y,z)
+
+        # 2) type of interaction
+        r = random()
+
+        if (r < p[0]): #elastic scattering with carbon
+            A = 12
+            rand = random()
+            # calculate energy loss and so theta scattering of the neutron
+            theta_scat, E = scattering_angle(E, A, rand)
+            if E < MeV: break # energy threshold (for the energy resolution of my detector)
+            j = j+1 # next step
+            step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
         
-        # check if the particle is inside the scintillator
-        if( (pos >= pos_min ).all() & (pos <= pos_max).all() ):
-            # check if neutron interact with carbon or proton
-            r = random()
+        elif(r < p[1]): # inelastic scattering with carbon
+            j = j+1 # step successivo
+            step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
+            break # I'm interested onlys in multiple scattering
 
-            if (r < p[0]): #elastic scattering with carbon
-                A = 12
-                rand = random()
-                # calculate energy loss and so theta scattering of the neutron
-                theta_scat, E = scattering_angle(E, A, rand)
-                if E < MeV: break # energy threshold (for the energy resolution of my detector)
-                j = j+1 # next step
-                step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+        elif(r < p[2]): # elastic scattering with hydrogen
+            A = 1  
+            # calculate energy loss and so theta scattering of the neutron
+            rand = random()
+            theta_scat, E = scattering_angle(E, A, rand)
+            if E < MeV: break # energy thershold (for the energy resolution of my detector)
+            j = j+1 # next step
+            step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+
+        else: # inelastic scattering with hydrogen
+            step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
+            break # I'm interested onlys in multiple scattering
             
-            elif(r < p[1]): # inelastic scattering with carbon
-                j = j+1 # step successivo
-                step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-                event_list.append([e,j,pos[0],pos[1],pos[2]])
-                break # I'm interested onlys in multiple scattering
-
-
-
-            elif(r < p[2]): # elastic scattering with hydrogen
-                A = 1  
-                # calculate energy loss and so theta scattering of the neutron
-                rand = random()
-                theta_scat, E = scattering_angle(E, A, rand)
-                if E < MeV: break # energy thershold (for the energy resolution of my detector)
-                j = j+1 # next step
-                step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
-
-            else: # inelastic scattering with hydrogen
-                step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
-                event_list.append([e,j,pos[0],pos[1],pos[2]])
-                # j = j+1
-                break # I'm interested onlys in multiple scattering
-                
-                
-        # if particle is outside the scintillator
-        elif((pos!=pos_source).all()): # excluding source particles because the source could also be external to the scintillator
-            event_list.append([e,j,x0,y0,z0])
-
-
+        position = pos
         x0,y0,z0 = pos
 
-    # if the particle dies in the source
-    if event_list == []:
-        event_list.append([e,j,x0,y0,z0])
+    # if particle is outside the scintillator
+    event_list.append([e,j,pos[0],pos[1],pos[2]])
 
     return step_list, event_list
