@@ -163,10 +163,11 @@ def test_get_cs_2():
     cs_table, E = my_dataframe_and_energy()
     test_cs,test_l,test_p = get_cs(E, cs_table, n)
 
+    
+    # test_l = round_data(test_l, 2)
+    test_l = round(test_l, 2)
 
-    test_l = round_data(test_l, 2)
-
-    l = [0.16, 0.21,  0.26,  0.31,  0.31,  0.37, 0.42,  0.52, 0.57] 
+    l = 0.16 # [0.16, 0.21,  0.26,  0.31,  0.31,  0.37, 0.42,  0.52, 0.57] 
 
     assert (test_l == l).all()
 
@@ -182,9 +183,9 @@ def test_get_cs_3():
 
     test_p = round_data(test_p, 2)
 
-    p = [24.0, 20.0, 1.0, 1.17, 1.25, 1.38]
+    p = [0.28, 0.59, 0.78, 1.  ]
 
-    assert test_p == p
+    assert (test_p == p).all()
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 
@@ -411,12 +412,13 @@ def test_get_initial_energy_1():
     E, l, p = get_initial_energy(En_type, Energy, cs_table, n, E_rand)
 
     l = l*10**23
-    l = round_data(l, 1)
+    l = round(l, 1)
     p = round_data(p, 1)
 
     assert E == Energy, "Check errors in energy calculation"
-    assert (l == np.array([3.0, 4.0, 5.0, 6.0, 6.0, 7.0, 8.0, 10.0, 11.0])).all(), "check errors in free mean path (l)"
-    assert (p == np.array([24.0, 20.0, 1.0, 1.2, 1.2, 1.4])).all(), "Check errors in probability od having carbon / hydrogeb scattering (p)"
+    assert l == 3.0, "check errors in free mean path (l)"
+    assert (p == np.array([0.3, 0.6, 0.8, 1. ])).all(), "Check errors in probability od having carbon / hydrogeb scattering (p)"
+
 
 def test_get_initial_energy_2():
     """
@@ -432,11 +434,14 @@ def test_get_initial_energy_2():
     E, l, p = get_initial_energy(En_type, Energy, cs_table, n, E_rand)
 
     l = l*10**23
-    l = round_data(l, 1)
+    l = round(l, 1)
     p = round_data(p, 1)
+
+    print(p)
+
     assert E == 1., "Check errors in energy calculation"
-    assert (l == np.array([3.0, 4.0, 5.0, 6.0, 6.0, 7.0, 8.0, 10.0, 11.0])).all(), "check errors in free mean path (l)"
-    assert (p == np.array([24.0, 20.0, 1.0, 1.2, 1.2, 1.4])).all(), "Check errors in probability od having carbon / hydrogeb scattering (p)"
+    assert l == 3.0, "check errors in free mean path (l)"
+    assert (p == np.array([0.3, 0.6, 0.8, 1. ])).all(), "Check errors in probability od having carbon / hydrogeb scattering (p)"
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 
@@ -490,6 +495,7 @@ def test_event_func():
         'type_source':'PUNT', # type_source
         'source_params':np.array([1.,1.,1.]), # pos_min
     }
+    seed(42)
 
     # MY FUNCTION TO BE TESTED
     event_func(i, cs_table, data)
@@ -506,12 +512,13 @@ def test_event_func():
         assert string1 == '1,0,1.0,1.0,1.0,source,1\n', "Check problems in step writing"
 
     with open(event_name, 'r') as e:
-        string2 = e.readlines()
-        assert string2 == ['1,0,1.0,1.0,1.0\n'], "Check probelms with event writing"
+        string2 = e.readline()
+        assert string2 == '1,0,1.0,1.0,1.0\n', "Check probelms with event writing"
 
 
     os.remove(step_name)
     os.remove(event_name)
+
 
 def test_event():
     """
@@ -537,16 +544,16 @@ def test_event():
     N_i = data['N']
     w = 1
 
-
+    seed(42)
 
     step_list = []
     event_list = []
     step_list, event_list = event(i, cs_table, data, N_i, w, step_list, event_list)
 
-    assert step_list == [[2, 0, 1.0, 1.0, 1.0, 'source', 1]]
-    assert event_list == [[2, 0, 1.0, 1.0, 1.0]]
-    
+    assert step_list[0] == [2, 0, 1.0, 1.0, 1.0, 'source', 1], "Check steps"
+    assert event_list == [[2, 0, 1.0, 1.0, 1.0]], "Check event"
 
+    
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # MAKE_CONSTANTS FILE
