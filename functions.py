@@ -4,16 +4,9 @@ Utils for montecarlo program.
 
 # FUNCTIONS
 import numpy as np
-import pandas as pd
 from random import random
-import constants as c
 import shutil
-import sys
 import csv
-
-
-import time
-
 from tqdm import tqdm
 
 
@@ -534,7 +527,7 @@ def event_func(i, cs_table, data): # [cs_table, k]
     i: int
         Number of the process (for multiprocessing)
 
-    cs_table:
+    cs_table: dataframe
         cross section table.
     
     data: dictionary
@@ -673,7 +666,7 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
 
 
 
-    event_list:
+    event_list: list
         history of all the events of the previous particles in the simulation.
         In the list are written:
         
@@ -692,13 +685,13 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
         where x,y,z is the position of the interaction.
 
 
-    event_list:
+    event_list: list
         history of all the events of the previous particles in the simulation plus the current event.
         In the list are written:
         
             [event,last_step,x,y,z]
 
-        where x,y,z is the position where the particle stop (exit form the scintillator or reached energy lower than 1 MeV)
+        where x,y,z is the position where the particle stop (exit form the scintillator, reached energy lower than 1 MeV or did inelastic scattering)
 
     """
     e = w + (i * N_i) + 1 # number of the event

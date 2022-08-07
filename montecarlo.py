@@ -1,13 +1,11 @@
 # IMPORT LIBRARIES
 from random import seed
 import pandas as pd
-import numpy as np
 import multiprocessing as mp
 import time
 import os
 import glob
 import sys
-import argparse
 
 # my function
 import functions as func

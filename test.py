@@ -1,11 +1,8 @@
-from errno import ENETRESET
-from typing import TYPE_CHECKING
 from functions import random_rescale, source_position_est, get_cs, find_nearest, face_func, from_sph_coord_to_xyz, scattering_angle
 from functions import get_source_position, get_initial_energy, merge_tmp_tables
 from functions import event_func, event
 from make_constants import get_pos, get_single_val, get_molecular_density, make_dictionary
 import numpy as np
-import constants as c
 import os
 import pandas as pd
 from random import seed
