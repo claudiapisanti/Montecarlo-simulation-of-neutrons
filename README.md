@@ -95,20 +95,20 @@ It is possible to write anything after the sixth line: it will not be read by th
 4. Line 4. --> Energy value. 
 
 	- if line 3 is MONO, type a single value of energy for the particle source
-	- if line 3 is UNIF, type two value whilh will be the energy range in which the particles will be produced in an uniform distribution. Energy is in eV
+	- if line 3 is UNIF, type two value that will be the energy range in which the particles will be produced in an uniform distribution. Energy is in MeV
 
 	*example 1:* monoenergetic source. All initial neutrons will be produced with an enegy equal to 1 MeV.
 
 	```
 	MONO # line 3 energy distribution
-	1000000 #line 4 energy value
+	1 #line 4 energy value
 	```
 
 	*example 2:* uniformly distributd source. All initial neutrons energy will be in a range between Emin = 1 MeV and Emax = 10 MeV
 
 	```
 	UNIF # line 3 energy distribution
-	1000000 10000000 # line 4 energy range
+	1 10 # line 4 energy range
 	```
 5. Line 5. --> Scintillator dimensions. Dimension of the scintillator must be typed in cm. For each direction (x,y,z) the lenght of the parallelepiped must be given followed by a space. 
 
@@ -137,20 +137,21 @@ It is possible to write anything after the sixth line: it will not be read by th
 	0 0 6 # line 7 point source coordinates
 	```
 
-	- if line 6 is EST, type the probability of having a certain distribution. For the lefend of faces numbers see the picture below
+	- if line 6 is EST, type the probability of having a certain distribution. For the legend of faces numbers see the picture below
 
-		NB: the program altready normalize the probability distribution, so it will not be necessary that the sum of the probabilities of all the six faces is equal to 1. 
+		**NB:** the program altready normalize the probability distribution, so it will not be necessary that the sum of the probabilities of all the six faces is equal to 1. 
 
-	*example 2:* extended source with higher probability of particles coming from the top of the scintillator. In this case themajority of the neutrons come form th etop of the scintillator (face 1).
+	*example 2:* extended source with higher probability of particles coming from the top of the scintillator. In this case the majority of the neutrons comes form the top of the scintillator (face 1).
 
 	```
 	EST # line 5 spatial distribution
-	100 2 3 4 5 6 # line 6 probabilities that the particle is generated in a specific side of the scinitllator
+	100 2 3 4 5 6 # line 6 probability of generating the sorce in a specific face
 	```
 
 	- if line 6 is SPH, type the radius of the sphere.
 
 	*example 3:* spherical source of radius 6 cm
+
 	```
 	SPH # line 6 spatial distribution
 	6 # line 7 radius in cm
@@ -161,7 +162,7 @@ Here a sketch ot the legend of the faces numbers.
 ![Scintillator face legend](scintillator_faces_50.png)
 
 
-Once intalled, an example of the sheet can be found as 'example.txt'.
+Once intalled, an example macro can be found as 'example.txt'.
 
 ### CROSS SECTIONS
 
@@ -172,22 +173,22 @@ The file 'cs_calculator.py' has been also provided for completness. Anyway, it i
 
 
 ## Testing
-All tests for the program are written in the file '*test.py*'. To run from the command line: 
+All tests for the program are written in the file *test.py*. To run from the command line: 
 ```
 pytest tests.py
 ```
 
 ## An Example
-As written in paragraph *'Usage'*, an example of the simulation of the program can be run by simply compiling the following code:
+As written in paragraph *Usage*, an example of the simulation of the program can be run by simply compiling the following code:
 
 ```
 	python3 montecarlo.py
 ```
 
-The program will run using the macro written in the file '*example.txt*'.
+The program will run using the macro written in the file *example.txt*.
 
 In the file a small simulation of 1000 neutrons is simulated.
-The source is monoenergetic (at 5 MeV) and it is pointlike situated ath the point (x,y,z) = (3,0,3).
+The source is monoenergetic (at 5 MeV) and it is pointlike situated at the point (x,y,z) = (3,0,3).
 The scintillator is a cube of 6 cm side.
 
 

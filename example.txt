@@ -1,6 +1,10 @@
+42 # seed
 1000 # number of particles generated
 MONO # energy type (MONO or UNIF)
-5000000 # energy source (for monoenergetic)
+5 # energy source (for monoenergetic)
 6 6 6 # scintillator dimensions in cm
 PUNT # source geometry (PUNT, EST or SPH)
 3 0 3 # source position (for punt)
+
+
+
