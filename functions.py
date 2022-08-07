@@ -4,7 +4,7 @@ Utils for montecarlo program.
 
 # FUNCTIONS
 import numpy as np
-from random import random
+from random import random, seed
 import shutil
 import csv
 from tqdm import tqdm
@@ -569,13 +569,13 @@ def event_func(i, cs_table, data): # [cs_table, k]
 
     The function produces two files: example.txt and step.txt that get track of the information of respectively each event and step information (position, energy, etc).
     See README.md file for further informations.    
-
-
     """
+
     # my data
     N = data['N'] # number of events
     n_processes = data['n_processes'] # number of processes
-
+    myseed = data['seed']
+    seed(myseed + i) # 'i' is used in order to get different random number for each process.
 
     # number of event for the i_th process
     N_i = int(N / n_processes)

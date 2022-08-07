@@ -1,6 +1,5 @@
 import numpy as np
 import multiprocessing as mp
-import sys
 #########################################################
 
 def get_pos(f):

@@ -24,11 +24,7 @@ elif len(sys.argv)==2:
 macro = open(macro_path, 'r')
 data = mkc.make_dictionary(macro)
 
-myseed = data['seed'] # get seed from dictionary
 n_processes = data['n_processes'] # get number of processes from dictionary
-
-# fix seed for random
-seed(myseed) 
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-
 # read info from file and get number of particles form bash
