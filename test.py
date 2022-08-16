@@ -492,16 +492,12 @@ def test_event_func():
         'type_source':'PUNT', # type_source
         'source_params':np.array([1.,1.,1.]), # pos_min
     }
-    seed(42)
 
     # MY FUNCTION TO BE TESTED
     event_func(i, cs_table, data)
 
     step_name = "tmp_step%d.txt" % (i)
     event_name = "tmp_event%d.txt" % (i)
-
-    # step_file = open(step_name, 'r')
-    # event_file = open(event_name, 'r')
 
     with open(step_name,'r') as s:
         string1 = s.readline()
@@ -541,7 +537,8 @@ def test_event():
     N_i = data['N']
     w = 1
 
-    seed(42)
+    myseed = int(data['seed'])
+    seed(myseed)
 
     step_list = []
     event_list = []
