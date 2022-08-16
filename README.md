@@ -61,12 +61,12 @@ It is also possible to compile the program with a different macro file (eg. 'mac
 ```
 For more information on how to write the macro_file see *Physical characteristics* paragraph.
 
-The program will work in multiprocessing and it will automatically count the number of cpu available. 
+The program will work in multiprocessing and it will automatically count the number of CPU available. 
 
 
 
 ## Physical characteristics
-The user can interact with the program via a txt file in which it is possible to change different parameters of the simulation: 
+The user can interact with the program via a txt file where it is possible to change different parameters of the simulation: 
 
 - number of particles,
 
@@ -78,7 +78,7 @@ The user can interact with the program via a txt file in which it is possible to
 
 It consists of a 6 line txt file in which several parameters of the simulation can be changed.
 
-**NB:** it is strictly necessary that the file line are written in the correct order and that nothing is written before the first line. Even a void line will be considered as a line and the program would not work properly.
+**NB:** it is strictly necessary that the file line are written in the correct order and that nothing is written before the first line. Even a void line or a space will be considered as a line and the program would not work properly.
 
 **NB:** each value inserted must be follower by a space ' ', otherwise the programm will not run properly. After this space, it is possible to write anything: it will not be read by the program.
 
@@ -87,6 +87,8 @@ It is possible to write anything after the sixth line: it will not be read by th
 *physical_characteristics.txt* must be compiled as following:
 
 1. Line 1. --> seed for random number generator
+
+	In order to get random numers, a constant value (+1) is added for each process. (eg. if the chosen seed is 42 and we are working with 4 processes, the seed foe each porcess will be respectively 42,43,44 and 45). In this was replicability and randomity are both preserved.
 
 2. Line 2. --> number of paricles
 
