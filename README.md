@@ -19,7 +19,7 @@ The program writes the informations regarding the single steps and the full even
  
 - **step.txt**: in which there are informations regarding the position of the interaction, the energy of the neutron and the type of interaction. 
 
-	*event, step, position (x,y,z),type of interaction and energy of the neutron after the interaction*
+	*event, step, position (x,y,z),type of interaction and energy of the neutron after the interaction (in MeV)*
 
  
 - **event.txt**: in which information about the final event are saved. The file keep sign of 

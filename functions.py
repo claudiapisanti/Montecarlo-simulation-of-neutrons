@@ -721,7 +721,7 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
     z0 = pos_source[2]
     position = np.array([0.,0.,0.]) # initialize
     
-    step_list.append([e,j,x0,y0,z0,'source',E])
+    step_list.append([e,j,x0,y0,z0,'source',E/MeV])
     theta_scat = 0
     r = 0.
     # j_th step
@@ -753,11 +753,11 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
             theta_scat, E = scattering_angle(E, A, rand)
             if E < MeV: break # energy threshold (for the energy resolution of my detector)
             j = j+1 # next step
-            step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+            step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E/MeV])
         
         elif(r < p[1]): # inelastic scattering with carbon
             j = j+1 # next step
-            step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
+            step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E/MeV])
             break # I'm interested onlys in multiple scattering
 
         elif(r < p[2]): # elastic scattering with hydrogen
@@ -767,10 +767,10 @@ def event(i, cs_table, data, N_i, w, step_list, event_list):
             theta_scat, E = scattering_angle(E, A, rand)
             if E < MeV: break # energy thershold (for the energy resolution of my detector)
             j = j+1 # next step
-            step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E])
+            step_list.append([e,j,pos[0],pos[1],pos[2],'elastic',E/MeV])
 
         else: # inelastic scattering with hydrogen
-            step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E])
+            step_list.append([e,j,pos[0],pos[1],pos[2],'inelastic',E/MeV])
             break # I'm interested onlys in multiple elastic scattering
             
         position = pos
