@@ -1,7 +1,7 @@
 # Montecarlo-simulation-of-neutrons
 Montecarlo simulaton of neutrons impinging in a polyvinyl toluene scintillator. 
 
-All the code and informations are in the branch master. 
+All the code and informations are in the branch *master*. 
 
 To get this git repository please type on your bash:
 
