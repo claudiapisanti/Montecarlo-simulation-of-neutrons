@@ -14,7 +14,7 @@ from random import seed
 
 def round_data(test_val, significative):
     """
-    Round data to a certain significative number (significative)
+    Round all elements of an array to a certain significative number (significative)
 
     """
 
@@ -24,6 +24,10 @@ def round_data(test_val, significative):
     return test_val
 
 def my_dataframe_and_energy():
+    """
+    Return a sample dataframe and energy fot the tests
+
+    """
     cs = {'E': [0.9,1.1], 
           'cs_tot': [2,3],
           'cs_el' : [3,4],
@@ -210,7 +214,6 @@ def test_face_func_1():
     array_cumulative = np.array([0.1,0.2,0.3,0.4,0.5,1.]) # cumulative distribution
 
     value = face_func(r, array_cumulative)
-    faces = [1,2,3,4,5,6] # faces of the rectangle
     assert value == 6
 
 # -:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-

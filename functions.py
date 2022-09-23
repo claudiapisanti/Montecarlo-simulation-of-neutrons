@@ -259,7 +259,7 @@ def face_func(r, face_prob_cum):
     """
     face_func(r, face_prob_cum)
 
-    Randomly select a face of the rectangular extended source, given the cumulativefunction (face_prob_cum).
+    Randomly select a face of the rectangular extended source, given the cumulative function (face_prob_cum).
 
     Parameters:
     ----------
@@ -520,7 +520,7 @@ def event_func(i, cs_table, data): # [cs_table, k]
     """
     event_func(i, cs_table, data)
 
-    Main function. This unction group into itself N_i single events that ill be compiled in the single process.
+    Main function. This function group into itself N_i single events that ill be compiled in the single process.
 
     Parameters:
     ----------

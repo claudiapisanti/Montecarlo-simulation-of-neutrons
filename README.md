@@ -7,24 +7,24 @@ The purpose of this simulation was to see whether it was possible to extimate th
 ### The aim of this simulation
 The aim of the experiment for which this simulation was built is to define direction vector of inpinging neutrons by exploiting the light emitted by scattered protons inside the scintillator. 
 
-In order to do so, it was necessary to understand the amount of neutrons that were able to do double elastic scattering inside the scintillator. This montecarlo simulation was developed for this putpose.
+In order to do so, it was necessary to understand the amount of neutrons that were able to do double elastic scattering inside the scintillator. This montecarlo simulation was developed for this purpose.
 
 
 After each scattering, the neutron loses a certain amount of energy and changes its direction of a scattering angle that is related with the amount of energy lost. 
 
 The simulation follow the path of the neutron and, for each step, untill it exit form the scintillator or its energy decreases below a certain threshold (which has been choosen of 1 MeV, comparable with detector resolution). 
 
-The information regarding the the neutron path 
+The information regarding the the neutron path.
 The program writes the informations regarding the single steps and the full event in two different files: 
  
 - **step.txt**: in which there are informations regarding the position of the interaction, the energy of the neutron and the type of interaction. 
 
-	*event, step, position (x,y,z) (in cm),type of interaction and energy of the neutron after the interaction (in MeV)*
+	*event, step, position (x,y,z),type of interaction and energy of the neutron after the interaction (in MeV) *
 
  
 - **event.txt**: in which information about the final event are saved. The file keep sign of 
 
-	*event number, total number of steps for the single event, final position of the neutron (x,y,z) (in cm)* 
+	*event number, total number of steps for the single event, final position of the neutron* 
 
 
 
@@ -76,7 +76,7 @@ The user can interact with the program via a txt file where it is possible to ch
 
 - geometrical distribution of the source
 
-It consists of a 6 line txt file in which several parameters of the simulation can be changed.
+It consists of a 7 line txt file in which several parameters of the simulation can be changed.
 
 **NB:** it is strictly necessary that the file line are written in the correct order and that nothing is written before the first line. Even a void line or a space will be considered as a line and the program would not work properly.
 
@@ -88,9 +88,9 @@ It is possible to write anything after the sixth line: it will not be read by th
 
 1. Line 1. --> seed for random number generator
 
-	In order to get random numers, a constant value (+1) is added for each process. (eg. if the chosen seed is 42 and we are working with 4 processes, the seed foe each porcess will be respectively 42,43,44 and 45). In this was replicability and randomity are both preserved.
+	In order to get random numers, a constant value (+1) is added for each process. (eg. if the chosen seed is 42 and we are working with 4 processes, the seed for each process will be respectively 42,43,44 and 45). In this way replicability and randomity are both preserved.
 
-2. Line 2. --> number of paricles
+2. Line 2. --> number of particles
 
 3. Line 3. --> Energy distribution. Type **MONO** for monoenergetic source and **UNIF** for uniformly distributed source.
 
@@ -122,26 +122,26 @@ It is possible to write anything after the sixth line: it will not be read by th
 
 6. Line 6. --> Geometrical distribution of the source. Type **PUNT** fro pointlike source, **EST** for extended source and **SPH** for spherical source
 
-	- **PUNT:**  it is a point like source: all the particles will be produced from a single point. The position of the source can be determined by the user (see line 7.)
-	- **EST:** in this case the particles are generated on the external surface of the scintillator on all the six faces. It is possible to give to the faces different weights in order to determine a more probable direction of the source(see line 7.) (a possible application of this is the simulation of cosmic rays that come from all around the space but they mostly came from above).
+	- **PUNT:**  it is a point like source: all the particles will be produced from a single point. The position of the source can be determined by the user (see line 7).
+	- **EST:** in this case the particles are generated on the external surface of the scintillator on all the six faces. It is possible to give to the faces different weights in order to determine a more probable direction of the source(see line 7) (a possible application of this is the simulation of cosmic rays that come from all around the space but they mostly came from above).
 
-	- **SPH:** in this case the particles are isotropically generated on a sphere. The centre of the sphere will be always the centre of the scintillator and the radius can be choosen (see line 7.)
+	- **SPH:** in this case the particles are isotropically generated on a sphere. The centre of the sphere will be always the centre of the scintillator and the radius can be choosen (see line 7).
 
 
 7. Line 7. --> Other parameters for the geometric distribution of the source.
 	
 	- if line 5 is PUNT, type the position of the source in (x,y,z) format. As for line 5, all the three coordinates must be followed by a space.
 
-	*example 1:* point source in pos x = 0, y = 0, z = 6.
+	*example 1:* point source in pos x = 0, y = 0, z = 6 cm.
 
 	```
 	PUNT # line 6 spatial distribution
 	0 0 6 # line 7 point source coordinates
 	```
 
-	- if line 6 is EST, type the probability of having a certain distribution. For the legend of faces numbers see the picture below
+	- if line 6 is EST, type the probability of having a certain distribution. For the legend of faces numbers see the picture below.
 
-		**NB:** the program altready normalize the probability distribution, so it will not be necessary that the sum of the probabilities of all the six faces is equal to 1. 
+		**NB:** the program already normalize the probability distribution, so it will not be necessary that the sum of the probabilities of all the six faces is equal to 1. 
 
 	*example 2:* extended source with higher probability of particles coming from the top of the scintillator. In this case the majority of the neutrons comes form the top of the scintillator (face 1).
 
@@ -152,7 +152,7 @@ It is possible to write anything after the sixth line: it will not be read by th
 
 	- if line 6 is SPH, type the radius of the sphere.
 
-	*example 3:* spherical source of radius 6 cm
+	*example 3:* spherical source of radius 6 cm.
 
 	```
 	SPH # line 6 spatial distribution
